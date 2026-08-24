@@ -314,6 +314,84 @@ export default function Landing() {
       </section>
 
       {/* ========================================================= */}
+      {/* LIVE EMAIL FEATURE HIGHLIGHT STRIP */}
+      {/* ========================================================= */}
+      <section style={{
+        background: 'linear-gradient(90deg, #0c4a6e 0%, #0e7490 40%, #0c4a6e 100%)',
+        borderTop: '1px solid rgba(56,189,248,0.2)',
+        borderBottom: '1px solid rgba(56,189,248,0.2)',
+        padding: '0',
+        overflow: 'hidden',
+        position: 'relative',
+      }}>
+        {/* Glow pulse backdrop */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'radial-gradient(ellipse 60% 120% at 50% 50%, rgba(14,116,144,0.4) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+
+        <div className="container" style={{ position: 'relative' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px',
+            padding: '18px 0',
+          }}>
+
+            {/* Left: Live badge + heading */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '7px',
+                background: 'rgba(16,185,129,0.18)', border: '1px solid rgba(16,185,129,0.5)',
+                borderRadius: '6px', padding: '5px 12px',
+              }}>
+                <span style={{
+                  width: 8, height: 8, borderRadius: '50%', background: '#10b981',
+                  boxShadow: '0 0 0 3px rgba(16,185,129,0.35)',
+                  display: 'inline-block', animation: 'pulse 1.8s ease-in-out infinite',
+                }} />
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#6ee7b7', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Live</span>
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: '14px', fontWeight: 800, color: '#f0f9ff' }}>
+                  ✉️ Real-Time Email Confirmation — Active on Every Booking
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#7dd3fc' }}>
+                  Patients receive an instant HTML email with full appointment details, reminders &amp; Google Calendar link immediately after booking.
+                </p>
+              </div>
+            </div>
+
+            {/* Right: Feature pills */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {[
+                { icon: '📧', text: 'Instant Confirmation' },
+                { icon: '⏰', text: '24h &amp; 2h Reminders' },
+                { icon: '📅', text: 'Google Calendar Link' },
+                { icon: '💊', text: 'Prescription Email' },
+              ].map(({ icon, text }) => (
+                <span
+                  key={text}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '5px',
+                    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: '20px', padding: '4px 12px',
+                    fontSize: '11.5px', fontWeight: 700, color: '#e0f2fe',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <span dangerouslySetInnerHTML={{ __html: icon }} /> <span dangerouslySetInnerHTML={{ __html: text }} />
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================= */}
       {/* 2. CENTRES OF EXCELLENCE (SUPER-SPECIALTY INSTITUTES) */}
       {/* ========================================================= */}
       <section style={{ padding: '4rem 0' }}>
@@ -609,7 +687,7 @@ export default function Landing() {
                 <span style={{ fontSize: '1.2rem', fontWeight: 800 }}>PulseCare Medical Institute</span>
               </div>
               <p style={{ lineHeight: 1.6, color: '#CBD5E1', marginBottom: '1rem' }}>
-                A multi-specialty tertiary care hospital & clinical research ecosystem dedicated to patient-first medical excellence, rapid diagnostics, and transparent healthcare.
+                A multi-specialty tertiary care hospital &amp; clinical research ecosystem dedicated to patient-first medical excellence, rapid diagnostics, and transparent healthcare.
               </p>
               <div style={{ fontSize: '12px', color: '#94A3B8' }}>
                 NABH Reference Code: HOSP-2026-TERT-042

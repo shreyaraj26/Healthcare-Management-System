@@ -425,9 +425,73 @@ export default function BookingFlow() {
               </div>
 
               <h2 style={{ fontSize: 'var(--text-2xl)', fontWeight: 800 }}>Appointment Confirmed!</h2>
-              <p className="text-secondary text-sm" style={{ marginTop: 'var(--space-1)', marginBottom: 'var(--space-6)' }}>
+              <p className="text-secondary text-sm" style={{ marginTop: 'var(--space-1)', marginBottom: 'var(--space-4)' }}>
                 Your appointment ID is <strong style={{ color: 'var(--color-text-primary)' }}>{confirmedBooking?._id || 'HS-74829'}</strong>. A confirmation has been added to your HealthSync records.
               </p>
+
+              {/* ── Real-Time Email Dispatch Notification Card ── */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(5,150,105,0.12) 0%, rgba(2,132,199,0.08) 100%)',
+                border: '1.5px solid rgba(16,185,129,0.35)',
+                borderRadius: '12px',
+                padding: '16px 20px',
+                marginBottom: 'var(--space-5)',
+                textAlign: 'left',
+                position: 'relative',
+                overflow: 'hidden',
+              }}>
+                {/* Animated shimmer top bar */}
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
+                  background: 'linear-gradient(90deg, #10b981 0%, #0284c7 50%, #10b981 100%)',
+                  backgroundSize: '200% 100%',
+                  animation: 'shimmer 2.2s linear infinite',
+                }} />
+
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: '10px', flexShrink: 0,
+                    background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px',
+                  }}>✉️</div>
+
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: '#10b981' }}>
+                        Confirmation Email Dispatched
+                      </span>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.4)',
+                        borderRadius: '20px', padding: '1px 8px',
+                        fontSize: '10px', fontWeight: 800, color: '#6ee7b7',
+                      }}>
+                        <span style={{
+                          width: 6, height: 6, background: '#10b981', borderRadius: '50%',
+                          display: 'inline-block', animation: 'pulse 1.5s ease-in-out infinite',
+                        }} />
+                        LIVE
+                      </span>
+                    </div>
+
+                    <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+                      A detailed HTML confirmation email has been sent to your registered address with doctor details, appointment time, location, reported symptoms &amp; reference ID.
+                    </p>
+
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {['📋 Full Appointment Details', '⏰ 24h Auto-Reminder', '⏰ 2h Auto-Reminder', '📅 Google Calendar Link'].map((item) => (
+                        <span key={item} style={{
+                          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                          borderRadius: '4px', padding: '2px 8px',
+                          fontSize: '10.5px', fontWeight: 600, color: 'var(--color-text-muted)',
+                        }}>
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Itinerary Details Box */}
               <div
