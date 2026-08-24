@@ -24,10 +24,10 @@ const bootstrap = async () => {
     const server = http.createServer(app);
 
     // 2. Start HTTP server immediately
-    server.listen(PORT, () => {
+    server.listen(PORT, '0.0.0.0', () => {
       logger.info('╔════════════════════════════════════════════╗');
       logger.info('║     HealthSync API Server — RUNNING        ║');
-      logger.info(`║     Port: ${PORT}                                ║`);
+      logger.info(`║     Host: 0.0.0.0:${PORT}                          ║`);
       logger.info(`║     Env:  ${env.NODE_ENV}                            ║`);
       logger.info('╚════════════════════════════════════════════╝');
     });

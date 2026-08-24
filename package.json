@@ -1,0 +1,15 @@
+{
+  "name": "healthcare-management-system",
+  "version": "1.0.0",
+  "description": "PulseCare AI — Full-Stack Healthcare Platform",
+  "scripts": {
+    "build": "npm --prefix server install",
+    "start": "node server/src/server.js",
+    "dev": "node --watch server/src/server.js",
+    "seed": "node server/src/seed/seed.js",
+    "install-all": "npm --prefix server install && npm --prefix client install"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
