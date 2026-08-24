@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Search, Sparkles, X, MapPin,
+  Search, Sparkles, X, MapPin, ShieldCheck, Info, CheckCircle2, Stethoscope, Filter
 } from 'lucide-react';
 import DoctorCard from '../../components/doctor/DoctorCard';
 import LocationSelector, { getStoredCity, setStoredCity, POPULAR_CITIES } from '../../components/common/LocationSelector';
@@ -24,12 +24,12 @@ const CORE_DEPARTMENTS = [
 ];
 
 const SkeletonCard = () => (
-  <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '20px', display: 'flex', gap: '16px' }}>
-    <div className="skeleton skeleton-circle" style={{ width: 60, height: 60, flexShrink: 0 }} />
+  <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', gap: '1rem' }}>
+    <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#E2E8F0' }} />
     <div style={{ flex: 1 }}>
-      <div className="skeleton skeleton-title" style={{ width: '50%', height: '18px', marginBottom: '8px' }} />
-      <div className="skeleton skeleton-text" style={{ width: '30%', height: '14px', marginBottom: '12px' }} />
-      <div className="skeleton skeleton-text" style={{ width: '80%', height: '12px' }} />
+      <div style={{ width: '50%', height: '16px', background: '#E2E8F0', borderRadius: '4px', marginBottom: '8px' }} />
+      <div style={{ width: '30%', height: '12px', background: '#E2E8F0', borderRadius: '4px', marginBottom: '12px' }} />
+      <div style={{ width: '80%', height: '10px', background: '#E2E8F0', borderRadius: '4px' }} />
     </div>
   </div>
 );
@@ -61,13 +61,12 @@ export default function DoctorDiscovery() {
       const data = await api.doctors.search(params);
       setDoctors(data.data.doctors || []);
     } catch {
-      addToast('Failed to load doctor directory. Please check network connection.', 'error');
+      addToast('Failed to load specialist network. Please check network connection.', 'error');
     } finally {
       setLoading(false);
     }
   }, [selectedCity, specialty]);
 
-  // Deep Natural Language Search
   const executeSearch = async (textQuery) => {
     const q = textQuery !== undefined ? textQuery : searchQuery;
     if (!q || !q.trim()) {
@@ -94,11 +93,11 @@ export default function DoctorDiscovery() {
 
       if (matchedDocs && matchedDocs.length > 0) {
         setDoctors(matchedDocs);
-        addToast(`Found ${matchedDocs.length} specialists for '${aiMatch.primarySpecialty}' in ${aiMatch.detectedCity || selectedCity}`, 'success');
+        addToast(`AI matched '${aiMatch.primarySpecialty}' in ${aiMatch.detectedCity || selectedCity}`, 'success');
       } else {
         fetchDoctors(aiMatch.detectedCity || selectedCity, aiMatch.primarySpecialty || 'All');
       }
-    } catch (err) {
+    } catch {
       fetchDoctors(selectedCity, 'All');
     } finally {
       setAiLoading(false);
@@ -106,33 +105,23 @@ export default function DoctorDiscovery() {
     }
   };
 
-  // URL Query on Mount
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const q = params.get('q');
-    const spec = params.get('specialization');
-    if (spec) {
-      setSpecialty(spec);
+    const urlParams = new URLSearchParams(window.location.search);
+    const qParam = urlParams.get('q');
+    const cityParam = urlParams.get('city');
+
+    if (cityParam) {
+      setSelectedCity(cityParam);
+      setStoredCity(cityParam);
     }
-    if (q) {
-      setSearchQuery(q);
-      executeSearch(q);
+
+    if (qParam) {
+      setSearchQuery(qParam);
+      executeSearch(qParam);
     } else {
-      fetchDoctors();
+      fetchDoctors(cityParam || selectedCity, 'All');
     }
   }, []);
-
-  // Listen to city change events
-  useEffect(() => {
-    const handleCityChange = (e) => {
-      if (e.detail && e.detail !== selectedCity) {
-        setSelectedCity(e.detail);
-        fetchDoctors(e.detail, specialty);
-      }
-    };
-    window.addEventListener('healthsync_city_changed', handleCityChange);
-    return () => window.removeEventListener('healthsync_city_changed', handleCityChange);
-  }, [selectedCity, specialty, fetchDoctors]);
 
   const handleCitySelect = (c) => {
     setSelectedCity(c);
@@ -159,7 +148,6 @@ export default function DoctorDiscovery() {
     fetchDoctors(selectedCity, 'All');
   };
 
-  // Filter based on active tab ('all', 'bookable', 'reference')
   const bookableDoctors = doctors.filter(d => d.isBookable !== false && d.doctorType !== 'REFERENCE');
   const referenceDoctors = doctors.filter(d => d.isBookable === false || d.doctorType === 'REFERENCE');
 
@@ -169,42 +157,33 @@ export default function DoctorDiscovery() {
     return true;
   });
 
-  const bookableCount = bookableDoctors.length;
-  const referenceCount = referenceDoctors.length;
-
   return (
-    <div style={{ background: '#F8FAFC', minHeight: 'calc(100vh - 70px)', padding: '24px 0 48px 0' }}>
+    <div className="page">
       <div className="container">
 
-        {/* ── 1. CLEAN APOLLO-STYLE DIRECTORY HEADER ── */}
-        <div style={{
-          background: '#FFFFFF',
-          border: '1px solid #E2E8F0',
-          borderRadius: '16px',
-          padding: '20px 24px',
-          marginBottom: '20px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        {/* ── 1. NORDIC DIRECTORY HEADER ── */}
+        <div className="glass-card" style={{ padding: '1.75rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#0284C7', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Verified Specialist Network
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                <span className="badge badge-indigo">
+                  <Stethoscope size={13} />
+                  Verified Clinical Specialist Network
                 </span>
-                <span style={{ color: '#94A3B8' }}>·</span>
+                <span style={{ color: '#CBD5E1' }}>·</span>
                 <LocationSelector currentCity={selectedCity} onCityChange={handleCitySelect} />
               </div>
-              <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.02em' }}>
-                Top Doctors & Clinics in <span style={{ color: '#0284C7' }}>{selectedCity}</span>
+              <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', margin: 0 }}>
+                Specialists & OPD Clinics in <span style={{ color: '#4F46E5' }}>{selectedCity}</span>
               </h1>
-              <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0 0' }}>
-                Showing verified doctors, hospital departments, and clinics with live booking & walk-in OPD.
+              <p style={{ fontSize: '0.9rem', color: '#64748B', margin: '4px 0 0 0' }}>
+                Real-time 30-min booking slots with 5-minute atomic reservation holds.
               </p>
             </div>
 
             {/* Quick Popular City Chips */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>Quick Cities:</span>
+              <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 700 }}>Quick Switch:</span>
               {POPULAR_CITIES.slice(0, 6).map((c) => (
                 <button
                   key={c}
@@ -213,10 +192,10 @@ export default function DoctorDiscovery() {
                   style={{
                     fontSize: '11px',
                     fontWeight: 700,
-                    padding: '4px 10px',
-                    borderRadius: '20px',
-                    border: selectedCity === c ? '1.5px solid #0284C7' : '1px solid #E2E8F0',
-                    background: selectedCity === c ? '#0284C7' : '#F8FAFC',
+                    padding: '5px 12px',
+                    borderRadius: '9999px',
+                    border: selectedCity === c ? '1.5px solid #4F46E5' : '1px solid #E2E8F0',
+                    background: selectedCity === c ? '#4F46E5' : '#FFFFFF',
                     color: selectedCity === c ? '#FFFFFF' : '#475569',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
@@ -229,24 +208,24 @@ export default function DoctorDiscovery() {
           </div>
         </div>
 
-        {/* ── 2. SINGLE UNIVERSAL AI SEARCH BAR ── */}
-        <div style={{ marginBottom: '16px' }}>
+        {/* ── 2. AI COMMAND SEARCH BAR ── */}
+        <div style={{ marginBottom: '1.5rem' }}>
           <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '10px' }}>
             <div style={{ position: 'relative', flex: 1 }}>
-              <Search size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+              <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
               <input
-                className="form-input"
+                className="input-control"
                 style={{
-                  height: '50px',
-                  paddingLeft: '46px',
+                  height: '52px',
+                  paddingLeft: '48px',
                   paddingRight: searchQuery ? '40px' : '16px',
-                  fontSize: '14px',
-                  borderRadius: '12px',
+                  fontSize: '0.95rem',
+                  borderRadius: '16px',
                   background: '#FFFFFF',
                   border: '1.5px solid #CBD5E1',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                  boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)',
                 }}
-                placeholder="Search any doctor, specialty, symptom or city (e.g. 'Dr. Priya', 'Cardiologist in Indore', 'Animal doc in Bangalore')..."
+                placeholder="Ask Gemini: 'Cardiologist in Indore', 'Skin rash in Bhopal', 'Dentist for root canal'..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -255,7 +234,7 @@ export default function DoctorDiscovery() {
                   type="button"
                   onClick={handleClearSearch}
                   style={{
-                    position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
+                    position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
                     background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8',
                   }}
                 >
@@ -269,9 +248,9 @@ export default function DoctorDiscovery() {
               className="btn btn-primary"
               disabled={aiLoading}
               style={{
-                height: '50px',
+                height: '52px',
                 padding: '0 24px',
-                borderRadius: '12px',
+                borderRadius: '16px',
                 fontSize: '14px',
                 fontWeight: 700,
                 display: 'flex',
@@ -281,28 +260,24 @@ export default function DoctorDiscovery() {
               }}
             >
               {aiLoading ? (
-                <>
-                  <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
-                  <span>Searching AI...</span>
-                </>
+                <span>Triage Analyzing...</span>
               ) : (
                 <>
                   <Sparkles size={16} />
-                  <span>Search Care</span>
+                  <span>AI Triage Search</span>
                 </>
               )}
             </button>
           </form>
         </div>
 
-        {/* ── 3. AI TRIAGE BANNER (If Active) ── */}
+        {/* ── 3. AI MATCH BANNER ── */}
         {aiResult && (
-          <div className="animate-slideDown" style={{
-            background: '#F0FDF4',
-            border: '1.5px solid #BBF7D0',
-            borderRadius: '12px',
-            padding: '14px 18px',
-            marginBottom: '16px',
+          <div className="glass-card" style={{
+            background: '#ECFDF5',
+            border: '1.5px solid #10B981',
+            padding: '1rem 1.25rem',
+            marginBottom: '1.5rem',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -311,14 +286,14 @@ export default function DoctorDiscovery() {
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                <span style={{ fontSize: '10px', fontWeight: 800, padding: '2px 7px', borderRadius: '4px', background: '#DCFCE7', color: '#166534', textTransform: 'uppercase' }}>
-                  ✨ Gemini AI Match
+                <span className="badge badge-emerald">
+                  <Sparkles size={12} /> Gemini Match
                 </span>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A' }}>
+                <span style={{ fontSize: '14px', fontWeight: 800, color: '#065F46' }}>
                   {aiResult.primarySpecialty} {aiResult.detectedCity ? `in ${aiResult.detectedCity}` : ''}
                 </span>
               </div>
-              <p style={{ fontSize: '12px', color: '#334155', margin: 0 }}>
+              <p style={{ fontSize: '13px', color: '#334155', margin: 0 }}>
                 {aiResult.reasoning}
               </p>
             </div>
@@ -326,18 +301,16 @@ export default function DoctorDiscovery() {
             <button
               type="button"
               onClick={handleClearSearch}
-              style={{
-                background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '8px',
-                padding: '6px 12px', fontSize: '11px', fontWeight: 700, color: '#475569', cursor: 'pointer'
-              }}
+              className="btn btn-secondary btn-sm"
+              style={{ padding: '5px 12px', fontSize: '11px' }}
             >
               Clear Filter ✕
             </button>
           </div>
         )}
 
-        {/* ── 4. SPECIALTY FILTER PILLS ── */}
-        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '16px', scrollbarWidth: 'none' }}>
+        {/* ── 4. HORIZONTAL SPECIALTY PILL TABS ── */}
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '1.5rem' }}>
           {CORE_DEPARTMENTS.map((dept) => {
             const isSelected = specialty.toLowerCase() === dept.toLowerCase();
             return (
@@ -345,48 +318,36 @@ export default function DoctorDiscovery() {
                 key={dept}
                 type="button"
                 onClick={() => handleSpecialtyClick(dept)}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: '20px',
-                  border: isSelected ? '1.5px solid #0284C7' : '1px solid #E2E8F0',
-                  background: isSelected ? '#0284C7' : '#FFFFFF',
-                  color: isSelected ? '#FFFFFF' : '#334155',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.15s ease',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                }}
+                className={`pill-tab ${isSelected ? 'active' : ''}`}
               >
-                {dept}
+                <span>{dept}</span>
               </button>
             );
           })}
         </div>
 
-        {/* ── 5. DIRECTORY TABS (ALL / BOOKABLE / HOSPITAL DIRECTORY) ── */}
+        {/* ── 5. DIRECTORY VIEW TABS ── */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           borderBottom: '1.5px solid #E2E8F0',
-          marginBottom: '20px',
+          marginBottom: '1.5rem',
           flexWrap: 'wrap',
           gap: '10px',
         }}>
-          <div style={{ display: 'flex', gap: '20px' }}>
+          <div style={{ display: 'flex', gap: '1.5rem' }}>
             <button
               type="button"
               onClick={() => setViewTab('all')}
               style={{
                 background: 'none', border: 'none', padding: '10px 0',
-                borderBottom: viewTab === 'all' ? '2.5px solid #0284C7' : '2.5px solid transparent',
-                color: viewTab === 'all' ? '#0284C7' : '#64748B',
+                borderBottom: viewTab === 'all' ? '3px solid #4F46E5' : '3px solid transparent',
+                color: viewTab === 'all' ? '#4F46E5' : '#64748B',
                 fontSize: '13px', fontWeight: 800, cursor: 'pointer',
               }}
             >
-              All Doctors ({doctors.length})
+              All Specialists ({doctors.length})
             </button>
 
             <button
@@ -394,12 +355,12 @@ export default function DoctorDiscovery() {
               onClick={() => setViewTab('bookable')}
               style={{
                 background: 'none', border: 'none', padding: '10px 0',
-                borderBottom: viewTab === 'bookable' ? '2.5px solid #0284C7' : '2.5px solid transparent',
-                color: viewTab === 'bookable' ? '#0284C7' : '#64748B',
+                borderBottom: viewTab === 'bookable' ? '3px solid #10B981' : '3px solid transparent',
+                color: viewTab === 'bookable' ? '#10B981' : '#64748B',
                 fontSize: '13px', fontWeight: 800, cursor: 'pointer',
               }}
             >
-              ⚡ Instant Bookable Online ({bookableCount})
+              ⚡ Instant 5-Min Holdable ({bookableDoctors.length})
             </button>
 
             <button
@@ -407,12 +368,12 @@ export default function DoctorDiscovery() {
               onClick={() => setViewTab('reference')}
               style={{
                 background: 'none', border: 'none', padding: '10px 0',
-                borderBottom: viewTab === 'reference' ? '2.5px solid #0284C7' : '2.5px solid transparent',
-                color: viewTab === 'reference' ? '#0284C7' : '#64748B',
+                borderBottom: viewTab === 'reference' ? '3px solid #4F46E5' : '3px solid transparent',
+                color: viewTab === 'reference' ? '#4F46E5' : '#64748B',
                 fontSize: '13px', fontWeight: 800, cursor: 'pointer',
               }}
             >
-              🏥 Verified Hospital Directory ({referenceCount})
+              🏥 Hospital OPD Directory ({referenceDoctors.length})
             </button>
           </div>
 
@@ -421,78 +382,38 @@ export default function DoctorDiscovery() {
           </span>
         </div>
 
-        {/* ── 6. DOCTOR & CLINIC CARDS GRID ── */}
+        {/* ── 6. DOCTORS GRID ── */}
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
           </div>
         ) : displayedDoctors.length === 0 ? (
-          <div style={{
-            background: '#FFFFFF',
-            border: '1px solid #E2E8F0',
-            borderRadius: '16px',
-            padding: '48px 24px',
-            textAlign: 'center',
-          }}>
-            <div style={{ fontSize: '32px', marginBottom: '10px' }}>🏥</div>
-            <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-              No doctors found matching '{searchQuery || specialty}' in {selectedCity}
+          <div className="glass-card" style={{ padding: '3rem 1.5rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🏥</div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', marginBottom: '6px' }}>
+              No specialists found for '{searchQuery || specialty}' in {selectedCity}
             </h3>
-            <p style={{ fontSize: '13px', color: '#64748B', margin: '6px 0 16px 0' }}>
-              Try searching a different specialty or browse all specialties in {selectedCity}.
+            <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '1.5rem' }}>
+              Try choosing another department or browse all specialties in {selectedCity}.
             </p>
             <button
               type="button"
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary btn-sm btn-pill"
               onClick={handleClearSearch}
             >
-              View All Doctors in {selectedCity}
+              View All Specialists in {selectedCity}
             </button>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* Section A: Bookable Specialists */}
-            {(viewTab === 'all' || viewTab === 'bookable') && bookableDoctors.length > 0 && (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                  <ShieldCheck size={18} color="#0284C7" />
-                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                    HealthSync Verified Specialists · Available for Online Booking ({bookableDoctors.length})
-                  </h3>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '16px' }}>
-                  {bookableDoctors.map((doc) => (
-                    <DoctorCard key={doc._id} doctor={doc} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Section B: Public Medical Directory (Reference Profiles) */}
-            {(viewTab === 'all' || viewTab === 'reference') && referenceDoctors.length > 0 && (
-              <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '20px' }}>
-                <div style={{ marginBottom: '14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                    <Info size={18} color="#0284C7" />
-                    <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                      Verified Hospital & Clinic Directory in {selectedCity} ({referenceDoctors.length})
-                    </h3>
-                  </div>
-                  <p style={{ fontSize: '12px', color: '#64748B', margin: 0 }}>
-                    Verified hospital departments & specialists for direct walk-in / hospital consultation.
-                  </p>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '16px' }}>
-                  {referenceDoctors.map((doc) => (
-                    <DoctorCard key={doc._id} doctor={doc} />
-                  ))}
-                </div>
-              </div>
-            )}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+            {displayedDoctors.map((doc) => (
+              <DoctorCard key={doc._id} doctor={doc} />
+            ))}
           </div>
         )}
+
       </div>
     </div>
   );

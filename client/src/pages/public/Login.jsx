@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/ui/NotificationToast';
-import { Activity, Mail, Lock, Eye, EyeOff, ArrowRight, User, Stethoscope, ShieldCheck, Sparkles } from 'lucide-react';
+import { HeartPulse, Mail, Lock, Eye, EyeOff, ArrowRight, User, Stethoscope, ShieldCheck, Sparkles, Zap } from 'lucide-react';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -18,7 +18,7 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      const data = await login(email, password);
+      const data = await login({ email, password });
       addToast(`Welcome back, ${data.user.firstName}!`, 'success');
       const searchParams = new URLSearchParams(location.search);
       const redirectUrl = searchParams.get('redirect');
@@ -28,7 +28,7 @@ export default function Login() {
         navigate(`/${data.user.role}`, { replace: true });
       }
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your email and password.');
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -49,116 +49,156 @@ export default function Login() {
       name: 'Rohan Verma',
       email: 'rohan@patient.demo',
       password: 'Patient@123456',
+      desc: 'Health Hub & 5-min slot reservation',
       icon: User,
-      color: '#0284C7',
+      color: '#4F46E5',
+      bg: '#EEF2FF',
     },
     {
       role: 'Doctor',
       name: 'Dr. Priya Sharma',
       email: 'dr.priya@healthsync.demo',
       password: 'Doctor@123456',
+      desc: 'Cardiology schedule & clinical notes',
       icon: Stethoscope,
-      color: '#059669',
+      color: '#10B981',
+      bg: '#ECFDF5',
     },
     {
       role: 'Admin',
       name: 'Platform Admin',
       email: 'admin@healthsync.demo',
       password: 'Admin@123456',
+      desc: 'Queue manager & platform stats',
       icon: ShieldCheck,
       color: '#7C3AED',
+      bg: '#F5F3FF',
     },
   ];
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 70px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', background: '#F8FAFC' }}>
-      <div className="animate-scaleIn" style={{ width: '100%', maxWidth: '440px' }}>
+    <div style={{ minHeight: 'calc(100vh - 76px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem' }}>
+      <div style={{ width: '100%', maxWidth: '460px' }}>
         
-        {/* Simple Brand Header */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        {/* Brand Header */}
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
-            width: 52, height: 52, borderRadius: '14px',
-            background: 'linear-gradient(135deg, #0284C7, #0D9488)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px',
-            boxShadow: '0 8px 20px rgba(2, 132, 199, 0.2)',
+            width: '48px',
+            height: '48px',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #4F46E5 0%, #10B981 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 12px',
+            boxShadow: '0 8px 24px rgba(79, 70, 229, 0.35)',
+            color: '#FFFFFF',
           }}>
-            <Activity size={26} color="white" />
+            <HeartPulse size={24} strokeWidth={2.4} />
           </div>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', margin: '0 0 4px 0' }}>
-            Sign In to HealthSync
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', margin: '0 0 6px 0' }}>
+            Sign In to PulseCare AI
           </h1>
-          <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>
-            Enter your credentials to access your healthcare portal
+          <p style={{ fontSize: '0.9rem', color: '#64748B' }}>
+            Access your unified clinical appointment portal
           </p>
         </div>
 
-        {/* Simple Clean Login Card */}
-        <div style={{
-          background: '#FFFFFF',
-          border: '1px solid #E2E8F0',
-          borderRadius: '16px',
-          padding: '24px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-          marginBottom: '20px',
-        }}>
+        {/* 1-Click Evaluation Buttons */}
+        <div className="glass-card" style={{ padding: '1.25rem', marginBottom: '1.5rem', border: '1.5px solid rgba(79, 70, 229, 0.2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+            <Zap size={15} color="#F59E0B" />
+            <span style={{ fontSize: '12px', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Instant 1-Click Demo Logins
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {BETA_DEMO_ACCOUNTS.map((acc, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleLogin(acc.email, acc.password)}
+                disabled={loading}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  background: acc.bg,
+                  border: `1px solid ${acc.color}30`,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  textAlign: 'left',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = acc.color}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = `${acc.color}30`}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <acc.icon size={18} color={acc.color} />
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>{acc.name}</div>
+                    <div style={{ fontSize: '11px', color: '#64748B' }}>{acc.desc}</div>
+                  </div>
+                </div>
+                <span className="badge" style={{ background: '#FFFFFF', color: acc.color, border: `1px solid ${acc.color}40`, fontSize: '11px' }}>
+                  {acc.role} →
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Regular Login Card */}
+        <div className="glass-card" style={{ padding: '1.75rem' }}>
           {error && (
             <div style={{
+              background: '#FFF1F2',
+              border: '1px solid #FECDD3',
+              color: '#9F1239',
               padding: '10px 14px',
-              borderRadius: '8px',
-              background: '#FEE2E2',
-              border: '1px solid #FCA5A5',
-              color: '#991B1B',
+              borderRadius: '10px',
               fontSize: '13px',
-              fontWeight: 500,
-              marginBottom: '16px',
+              marginBottom: '1rem',
+              fontWeight: 600,
             }}>
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div className="form-group">
-              <label className="form-label" htmlFor="login-email" style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
-                Email Address
-              </label>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div className="input-group">
+              <label className="input-label">Email Address</label>
               <div style={{ position: 'relative' }}>
-                <Mail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
                 <input
-                  id="login-email"
                   type="email"
-                  className="form-input"
-                  style={{ paddingLeft: '40px', fontSize: '14px', borderRadius: '10px' }}
-                  placeholder="name@example.com"
+                  className="input-control"
+                  placeholder="name@domain.com"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  required
+                  style={{ paddingLeft: '2.5rem' }}
                 />
+                <Mail size={16} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="login-password" style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
-                Password
-              </label>
+            <div className="input-group">
+              <label className="input-label">Password</label>
               <div style={{ position: 'relative' }}>
-                <Lock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
                 <input
-                  id="login-password"
                   type={showPw ? 'text' : 'password'}
-                  className="form-input"
-                  style={{ paddingLeft: '40px', paddingRight: '40px', fontSize: '14px', borderRadius: '10px' }}
+                  className="input-control"
                   placeholder="••••••••"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  required
+                  style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
                 />
+                <Lock size={16} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                 <button
                   type="button"
                   onClick={() => setShowPw(!showPw)}
-                  style={{
-                    position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', padding: '4px',
-                  }}
+                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8' }}
                 >
                   {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -166,101 +206,20 @@ export default function Login() {
             </div>
 
             <button
-              id="login-submit-btn"
               type="submit"
-              className="btn btn-primary"
               disabled={loading}
-              style={{
-                marginTop: '4px',
-                padding: '12px',
-                fontSize: '14px',
-                fontWeight: 700,
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-              }}
+              className="btn btn-primary btn-lg"
+              style={{ width: '100%', marginTop: '0.5rem' }}
             >
-              {loading ? (
-                <>
-                  <div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} />
-                  <span>Signing In...</span>
-                </>
-              ) : (
-                <>
-                  <span>Sign In</span>
-                  <ArrowRight size={16} />
-                </>
-              )}
+              {loading ? 'Authenticating...' : 'Sign In'}
             </button>
           </form>
 
-          <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '13px', color: '#64748B', marginBottom: 0 }}>
+          <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '13px', color: '#64748B' }}>
             Don't have an account?{' '}
-            <Link to="/register" style={{ color: '#0284C7', fontWeight: 700, textDecoration: 'none' }}>
-              Create one free →
+            <Link to="/register" style={{ color: '#4F46E5', fontWeight: 700 }}>
+              Create Account
             </Link>
-          </p>
-        </div>
-
-        {/* 🧪 Clear Beta Testing Evaluation Box */}
-        <div style={{
-          background: '#F8FAFC',
-          border: '1.5px dashed #CBD5E1',
-          borderRadius: '14px',
-          padding: '14px 16px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 800, color: '#0369A1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                🧪 Beta Testing Phase — Quick Evaluation Access
-              </span>
-            </div>
-            <span style={{ fontSize: '10px', fontWeight: 700, background: '#FEF3C7', color: '#92400E', padding: '1px 6px', borderRadius: '4px' }}>
-              Demo Mode Only
-            </span>
-          </div>
-
-          <p style={{ fontSize: '11px', color: '#64748B', margin: '0 0 10px 0', lineHeight: 1.4 }}>
-            For review and evaluator testing during this <strong>Beta Phase</strong>, tap any demo role below to autofill credentials and sign in instantly:
-          </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-            {BETA_DEMO_ACCOUNTS.map(({ role, name, email, password, icon: Icon, color }) => (
-              <button
-                key={role}
-                type="button"
-                id={`demo-login-${role.toLowerCase()}`}
-                onClick={() => handleLogin(email, password)}
-                disabled={loading}
-                style={{
-                  padding: '8px 6px',
-                  background: '#FFFFFF',
-                  border: '1px solid #E2E8F0',
-                  borderRadius: '8px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  textAlign: 'center',
-                  transition: 'all 0.15s ease',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '3px',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = color;
-                  e.currentTarget.style.background = '#F0F9FF';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#E2E8F0';
-                  e.currentTarget.style.background = '#FFFFFF';
-                }}
-              >
-                <Icon size={16} color={color} />
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A' }}>{role}</span>
-                <span style={{ fontSize: '9px', color: '#64748B' }}>Touch to Test</span>
-              </button>
-            ))}
           </div>
         </div>
 

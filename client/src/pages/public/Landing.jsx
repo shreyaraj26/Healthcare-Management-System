@@ -4,636 +4,664 @@ import { useAuth } from '../../context/AuthContext';
 import {
   Activity, Shield, Brain, Calendar, Clock, ChevronRight, Star,
   Zap, Lock, Bell, MapPin, Search, Sparkles, CheckCircle2, Phone,
-  Award, Heart, Stethoscope, Building2, UserCheck, ArrowRight, FileText, FlaskConical, Check
+  Award, Heart, Stethoscope, Building2, UserCheck, ArrowRight, FileText,
+  FlaskConical, Check, Pill, Flame, AlertCircle, HeartPulse, RefreshCw
 } from 'lucide-react';
 import { POPULAR_CITIES, setStoredCity, getStoredCity } from '../../components/common/LocationSelector';
 import { useToast } from '../../components/ui/NotificationToast';
 
-const REAL_DOCTORS_PREVIEW = [
+const SEARCH_SUGGESTIONS = [
+  { text: 'Cardiologist in Indore', specialty: 'Cardiology', city: 'Indore' },
+  { text: 'Skin rash & itching in Bhopal', specialty: 'Dermatology', city: 'Bhopal' },
+  { text: 'Dentist for root canal', specialty: 'Dentistry', city: 'Bhopal' },
+  { text: 'Veterinary doctor in Bengaluru', specialty: 'Veterinary & Animal Care', city: 'Bengaluru' },
+  { text: 'Orthopaedic joint specialist', specialty: 'Orthopaedics', city: 'Bhopal' },
+];
+
+const MEDICINES_DATABASE = [
   {
-    name: 'Dr. Vipul Worah',
-    specialty: 'Gastroenterology & Hepatology',
-    experience: '26+ Years Experience',
-    hospital: 'Apollo Hospitals & Medical Center',
-    image: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&auto=format&fit=crop&q=80',
-    rating: 4.9,
-    fee: '₹800',
-    isBookable: true,
+    name: 'Dolo 650 (Paracetamol)',
+    salt: 'Paracetamol 650mg',
+    brandedPrice: 34,
+    janAushadhiPrice: 12,
+    quantity: '15 Tablets',
+    savingsPercent: 65,
+    indication: 'Fever, mild-to-moderate body aches, post-vaccine pain',
   },
   {
-    name: 'Dr. Shravan Bohra',
-    specialty: 'Gastroenterology & Liver Care',
-    experience: '25+ Years Experience',
-    hospital: 'Apollo Hospitals & Research Institute',
-    image: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400&auto=format&fit=crop&q=80',
-    rating: 4.95,
-    fee: '₹900',
-    isBookable: true,
+    name: 'Augmentin 625 Duo',
+    salt: 'Amoxicillin 500mg + Clavulanic Acid 125mg',
+    brandedPrice: 210,
+    janAushadhiPrice: 65,
+    quantity: '10 Tablets',
+    savingsPercent: 69,
+    indication: 'Bacterial infections, respiratory tract, ENT, dental abscess',
   },
   {
-    name: 'Dr. Surabhi Dogra Jani',
-    specialty: 'Gastroenterology & Clinical Nutrition',
-    experience: '12+ Years Experience',
-    hospital: 'Apollo Multi-Specialty Clinic',
-    image: 'https://images.unsplash.com/photo-1594824813627-ef3d76e73c38?w=400&auto=format&fit=crop&q=80',
-    rating: 4.85,
-    fee: '₹750',
-    isBookable: true,
+    name: 'Pan 40 (Pantoprazole)',
+    salt: 'Pantoprazole Gastro-resistant 40mg',
+    brandedPrice: 125,
+    janAushadhiPrice: 26,
+    quantity: '15 Tablets',
+    savingsPercent: 79,
+    indication: 'Acid reflux (GERD), gastric ulcer, acidity prevention',
   },
   {
-    name: 'Dr. Chirag Desai',
-    specialty: 'Surgical Gastroenterology & GI Oncology',
-    experience: '19+ Years Experience',
-    hospital: 'Apollo Hospital & Cancer Center',
-    image: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400&auto=format&fit=crop&q=80',
-    rating: 4.9,
-    fee: '₹1000',
-    isBookable: true,
+    name: 'Telma 40 (Telmisartan)',
+    salt: 'Telmisartan 40mg',
+    brandedPrice: 135,
+    janAushadhiPrice: 22,
+    quantity: '15 Tablets',
+    savingsPercent: 84,
+    indication: 'Hypertension (High Blood Pressure), cardiovascular risk reduction',
+  },
+  {
+    name: 'Glycomet 500 (Metformin)',
+    salt: 'Metformin Hydrochloride 500mg IP',
+    brandedPrice: 48,
+    janAushadhiPrice: 11,
+    quantity: '10 Tablets',
+    savingsPercent: 77,
+    indication: 'Type 2 Diabetes Mellitus glycemic control',
+  },
+  {
+    name: 'Montair-LC',
+    salt: 'Levocetirizine 5mg + Montelukast 10mg',
+    brandedPrice: 195,
+    janAushadhiPrice: 45,
+    quantity: '10 Tablets',
+    savingsPercent: 77,
+    indication: 'Allergic rhinitis, asthma flare-up, seasonal sneezing & congestion',
   },
 ];
 
-const CORE_SPECIALTIES = [
-  { id: 'Cardiology', label: 'Cardiology', icon: '❤️', desc: 'Heart care, ECG, bypass & angioplasty' },
-  { id: 'Dentistry', label: 'Dentistry', icon: '🦷', desc: 'Root canal, implants, teeth scaling & braces' },
-  { id: 'Neurology', label: 'Neurology', icon: '🧠', desc: 'Headache, stroke, brain & spine care' },
-  { id: 'Dermatology', label: 'Dermatology', icon: '🧴', desc: 'Skin allergies, acne, hair & laser' },
-  { id: 'Orthopaedics', label: 'Orthopaedics', icon: '🦴', desc: 'Joint replacement, fracture & spine' },
-  { id: 'General Medicine', label: 'General Medicine', icon: '👨‍⚕️', desc: 'Fever, diabetes, BP & OPD consultations' },
+const SYMPTOM_TRIAGE_SCENARIOS = [
+  {
+    id: 'chest',
+    icon: '❤️',
+    label: 'Chest Tightness & Palpitations',
+    urgency: 'Critical',
+    urgencyColor: '#F43F5E',
+    urgencyBg: '#FFF1F2',
+    specialty: 'Cardiology',
+    advice: 'Immediate ECG & Troponin evaluation. Do not delay.',
+    suggestedQuestions: ['Are symptoms radiating to the left arm?', 'Do you have a history of hypertension?'],
+  },
+  {
+    id: 'skin',
+    icon: '🧴',
+    label: 'Erythematous Skin Rash & Itching',
+    urgency: 'Medium',
+    urgencyColor: '#F59E0B',
+    urgencyBg: '#FEF3C7',
+    specialty: 'Dermatology',
+    advice: 'Antihistamine symptomatic relief; consult a dermatologist.',
+    suggestedQuestions: ['Did this appear after contact with allergens?', 'Any facial swelling or difficulty breathing?'],
+  },
+  {
+    id: 'dental',
+    icon: '🦷',
+    label: 'Severe Throbbing Toothache',
+    urgency: 'Medium',
+    urgencyColor: '#F59E0B',
+    urgencyBg: '#FEF3C7',
+    specialty: 'Dentistry',
+    advice: 'Possible dental pulp infection requiring root canal evaluation.',
+    suggestedQuestions: ['Is the pain aggravated by hot/cold liquids?', 'Is there visible gum swelling?'],
+  },
+  {
+    id: 'fever',
+    icon: '🌡️',
+    label: 'High Fever (102°F) with Chills',
+    urgency: 'High',
+    urgencyColor: '#EA580C',
+    urgencyBg: '#FFEDD5',
+    specialty: 'General Medicine',
+    advice: 'CBC & viral screening recommended; maintain adequate oral hydration.',
+    suggestedQuestions: ['How many days has fever persisted?', 'Any persistent vomiting or body aches?'],
+  },
+  {
+    id: 'pet',
+    icon: '🐾',
+    label: 'Pet Lethargy & Appetite Loss',
+    urgency: 'Medium',
+    urgencyColor: '#F59E0B',
+    urgencyBg: '#FEF3C7',
+    specialty: 'Veterinary & Animal Care',
+    advice: 'Schedule a clinical checkup with an animal care specialist.',
+    suggestedQuestions: ['Is the pet vomiting or refusing all fluids?', 'Is vaccination status up to date?'],
+  },
+];
+
+const SPECIALTY_DEPARTMENTS = [
+  { id: 'Cardiology', label: 'Cardiology', icon: '❤️', doctors: '14 Specialists', desc: 'ECG, Angiography, BP Management, Lipid profiles' },
+  { id: 'Dermatology', label: 'Dermatology', icon: '🧴', doctors: '18 Specialists', desc: 'Skin allergies, Acne protocols, Laser, Eczema' },
+  { id: 'Dentistry', label: 'Dentistry', icon: '🦷', doctors: '12 Specialists', desc: 'Root canal, Dental implants, Teeth scaling, Aligners' },
+  { id: 'Neurology', label: 'Neurology', icon: '🧠', doctors: '9 Specialists', desc: 'Stroke rehabilitation, Migraines, Nerve conduction' },
+  { id: 'Orthopaedics', label: 'Orthopaedics', icon: '🦴', doctors: '15 Specialists', desc: 'Joint replacement, Fracture fixation, Spine care' },
+  { id: 'General Medicine', label: 'General Medicine', icon: '👨‍⚕️', doctors: '24 Specialists', desc: 'Fever panels, Diabetes, Preventive wellness OPD' },
 ];
 
 export default function Landing() {
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
   const { addToast } = useToast();
-  const [selectedCity, setSelectedCity] = useState(getStoredCity() || 'Bhopal');
-  const [searchQuery, setSearchQuery] = useState('');
 
-  const handleSearch = (e) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCity, setSelectedCity] = useState(getStoredCity() || 'Bhopal');
+  const [activeTriage, setActiveTriage] = useState(SYMPTOM_TRIAGE_SCENARIOS[0]);
+  const [selectedMedIndex, setSelectedMedIndex] = useState(0);
+  const [medQuantity, setMedQuantity] = useState(2);
+
+  const handleSearchSubmit = (e) => {
     e.preventDefault();
     const q = searchQuery.trim();
     if (!q) {
       navigate('/patient/doctors');
       return;
     }
-    const qLower = q.toLowerCase();
-    let detected = '';
-    if (qLower.includes('bhopal') || qLower.includes('bpl')) detected = 'Bhopal';
-    else if (qLower.includes('indore') || qLower.includes('ind')) detected = 'Indore';
-    else if (qLower.includes('bangalore') || qLower.includes('banglore') || qLower.includes('bengaluru') || qLower.includes('bengalore') || qLower.includes('blr')) detected = 'Bengaluru';
-    else if (qLower.includes('mumbai') || qLower.includes('bombay') || qLower.includes('bom')) detected = 'Mumbai';
-    else if (qLower.includes('delhi') || qLower.includes('noida') || qLower.includes('gurgaon') || qLower.includes('gurugram') || qLower.includes('ncr')) detected = 'Delhi';
-    else if (qLower.includes('pune')) detected = 'Pune';
-    else if (qLower.includes('hyderabad') || qLower.includes('hyd') || qLower.includes('secunderabad')) detected = 'Hyderabad';
-    else if (qLower.includes('chennai') || qLower.includes('madras')) detected = 'Chennai';
-    else if (qLower.includes('ahmedabad') || qLower.includes('amd')) detected = 'Ahmedabad';
-    else if (qLower.includes('jaipur')) detected = 'Jaipur';
-    else if (qLower.includes('kolkata') || qLower.includes('calcutta')) detected = 'Kolkata';
-    else if (qLower.includes('lucknow')) detected = 'Lucknow';
-    else if (qLower.includes('chandigarh')) detected = 'Chandigarh';
-
-    if (detected) {
-      setSelectedCity(detected);
-      setStoredCity(detected);
-    }
     navigate(`/patient/doctors?q=${encodeURIComponent(q)}&ai=true`);
   };
 
-  const handleCitySelect = (c) => {
-    setSelectedCity(c);
-    setStoredCity(c);
-    navigate('/patient/doctors');
-  };
-
-  const handleSpecialtyClick = (specId) => {
-    navigate(`/patient/doctors?specialization=${encodeURIComponent(specId)}`);
-  };
-
-  const handleQuickDemoLogin = async (email, password) => {
-    try {
-      const data = await login(email, password);
-      addToast(`Welcome to HealthSync, ${data.user.firstName}!`, 'success');
-      navigate(`/${data.user.role}`, { replace: true });
-    } catch (err) {
-      navigate('/login');
+  const handleQuickSuggestion = (item) => {
+    setSearchQuery(item.text);
+    if (item.city) {
+      setSelectedCity(item.city);
+      setStoredCity(item.city);
     }
+    navigate(`/patient/doctors?q=${encodeURIComponent(item.text)}&ai=true`);
   };
 
-  const userDashboardRoute = user?.role === 'doctor' ? '/doctor' : user?.role === 'admin' ? '/admin' : '/patient';
+  const selectedMed = MEDICINES_DATABASE[selectedMedIndex];
+  const totalBranded = selectedMed.brandedPrice * medQuantity;
+  const totalJanAushadhi = selectedMed.janAushadhiPrice * medQuantity;
+  const totalSavings = totalBranded - totalJanAushadhi;
 
   return (
-    <div style={{ background: '#FFFFFF', minHeight: '100vh' }}>
+    <div className="page" style={{ paddingTop: '1.5rem' }}>
+      <div className="container">
+        
+        {/* ========================================================= */}
+        {/* 1. ASYMMETRIC BENTO GRID HERO */}
+        {/* ========================================================= */}
+        <div className="bento-grid" style={{ marginBottom: '3.5rem' }}>
+          
+          {/* Main Hero Card (8 Cols) */}
+          <div className="bento-col-8 glass-card" style={{
+            padding: '2.5rem',
+            background: 'linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)',
+            border: '1px solid rgba(79, 70, 229, 0.15)',
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            {/* Top decorative gradient orb */}
+            <div style={{
+              position: 'absolute',
+              top: '-60px',
+              right: '-60px',
+              width: '200px',
+              height: '200px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(79, 70, 229, 0.12) 0%, transparent 70%)',
+              pointerEvents: 'none',
+            }} />
 
-      {/* ── 1. CLEAN SILICON VALLEY HERO BANNER ── */}
-      <section className="apollo-hero-banner" style={{ position: 'relative', overflow: 'hidden', padding: '48px 0 56px 0' }}>
-        <div className="container" style={{ position: 'relative', zIndex: 10 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.25fr) minmax(0, 1fr)', gap: '44px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
+              <span className="badge badge-indigo">
+                <Sparkles size={13} />
+                Next-Gen Clinical Ecosystem
+              </span>
+              <span className="badge badge-emerald">
+                <CheckCircle2 size={13} />
+                2-Phase Atomic Slot Hold
+              </span>
+            </div>
 
-            {/* Left Hero Details */}
-            <div>
-              {/* Beta Pill & 24/7 Helpline */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '6px',
-                  padding: '4px 12px', borderRadius: '20px',
-                  background: 'rgba(254, 240, 138, 0.2)', border: '1px solid #FDE047',
-                  color: '#FEF08A', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em'
-                }}>
-                  <FlaskConical size={13} color="#FDE047" />
-                  <span>Beta Testing Phase · Healthcare Platform v1.2</span>
-                </div>
+            <h1 style={{ fontSize: '2.75rem', lineHeight: 1.15, marginBottom: '1.25rem', fontWeight: 800 }}>
+              Intelligent Healthcare, <br />
+              <span className="gradient-text-primary">Instant Triage & 30-Min Holds.</span>
+            </h1>
 
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '6px',
-                  padding: '4px 12px', borderRadius: '20px',
-                  background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
-                  color: '#FFFFFF', fontSize: '11px', fontWeight: 700
-                }}>
-                  <Phone size={12} color="#FDE047" />
-                  <span>24/7 Helpline: 1800-419-7979</span>
-                </div>
-              </div>
+            <p style={{ fontSize: '1.05rem', color: 'var(--color-text-secondary)', marginBottom: '2rem', maxWidth: '600px', lineHeight: 1.6 }}>
+              Experience clinical appointment booking powered by Gemini AI triage, zero double-booking 5-minute atomic locks, and transparent Jan Aushadhi generic pharmacy savings.
+            </p>
 
-              <h1 className="hero-title" style={{ fontSize: '36px', lineHeight: 1.2, margin: '0 0 14px 0' }}>
-                Book Verified Doctor Appointments & Clinical AI in <span style={{ color: '#FDE047' }}>{selectedCity}</span>
-              </h1>
-
-              <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.92)', lineHeight: 1.5, margin: '0 0 24px 0' }}>
-                Connect with board-certified doctors and top hospital departments across {selectedCity}. Instant 5-minute reservation holds with Gemini AI pre-visit intake briefs.
-              </p>
-
-              {/* Direct Deep AI Search Bar */}
-              <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px', marginBottom: '24px', maxWidth: '560px' }}>
-                <div style={{ position: 'relative', flex: 1 }}>
-                  <Sparkles size={17} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#0284C7' }} />
-                  <input
-                    className="form-input"
-                    style={{
-                      paddingLeft: '42px',
-                      height: '48px',
-                      fontSize: '13px',
-                      background: '#FFFFFF',
-                      borderRadius: '12px',
-                      border: 'none',
-                      color: '#0F172A',
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-                    }}
-                    placeholder="✨ Ask AI: 'animal doc in bangalore', 'cardiologist in indore', 'skin rash in bhopal'..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
+            {/* Live AI Command Search Bar */}
+            <form onSubmit={handleSearchSubmit} style={{ marginBottom: '1.5rem' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: '#FFFFFF',
+                borderRadius: '16px',
+                padding: '6px 8px 6px 16px',
+                border: '2px solid #E2E8F0',
+                boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+                transition: 'all 0.2s',
+              }}>
+                <Search size={20} color="#4F46E5" style={{ marginRight: '10px', flexShrink: 0 }} />
+                <input
+                  type="text"
+                  placeholder="Ask anything: 'Cardiologist in Indore', 'Rash in Bhopal', 'Dentist'..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    border: 'none',
+                    outline: 'none',
+                    width: '100%',
+                    fontSize: '0.95rem',
+                    color: '#0F172A',
+                    fontWeight: 500,
+                  }}
+                />
                 <button
                   type="submit"
-                  className="btn btn-amber"
-                  style={{
-                    height: '48px',
-                    padding: '0 20px',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    fontWeight: 800,
-                    whiteSpace: 'nowrap',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
+                  className="btn btn-primary btn-pill"
+                  style={{ padding: '10px 22px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
-                  <span>Search AI</span>
-                  <ArrowRight size={15} />
+                  <Sparkles size={15} />
+                  <span>AI Triage</span>
                 </button>
-              </form>
-
-              {/* Trust Badges */}
-              <div style={{ display: 'flex', gap: '18px', flexWrap: 'wrap' }}>
-                {[
-                  'Zero Overbooking',
-                  '5-Minute Slot Hold',
-                  'Jan Aushadhi Generic Prices',
-                  'Gemini AI Clinical Triage'
-                ].map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <CheckCircle2 size={15} color="#FDE047" strokeWidth={2.5} />
-                    <span style={{ fontSize: '12px', color: '#FFFFFF', fontWeight: 600 }}>{item}</span>
-                  </div>
-                ))}
               </div>
-            </div>
+            </form>
 
-            {/* Right Hero: Dedicated Healthcare Portal Login & Access System */}
-            <div>
-              <div
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: '20px',
-                  padding: '24px',
-                  boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
-                  border: '1px solid #E2E8F0',
-                  color: '#0F172A',
-                }}
-              >
-                {user ? (
-                  /* ── Logged In State: Portal Launcher ── */
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 0 3px rgba(16, 185, 129, 0.2)' }} />
-                        <span style={{ fontSize: '11px', fontWeight: 800, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                          Active Portal Session
-                        </span>
-                      </div>
-                      <span style={{
-                        fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px',
-                        background: user.role === 'doctor' ? '#ECFDF5' : user.role === 'admin' ? '#F5F3FF' : '#E0F2FE',
-                        color: user.role === 'doctor' ? '#059669' : user.role === 'admin' ? '#7C3AED' : '#0284C7',
-                      }}>
-                        {user.role.toUpperCase()}
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px', padding: '12px', background: '#F8FAFC', borderRadius: '12px' }}>
-                      <div style={{
-                        width: 46, height: 46, borderRadius: '12px',
-                        background: 'linear-gradient(135deg, #0284C7, #0D9488)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: '#FFFFFF', fontSize: '16px', fontWeight: 800
-                      }}>
-                        {user.firstName?.[0]}{user.lastName?.[0]}
-                      </div>
-                      <div>
-                        <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                          {user.firstName} {user.lastName}
-                        </h3>
-                        <p style={{ fontSize: '12px', color: '#64748B', margin: '2px 0 0 0' }}>
-                          {user.email}
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={() => navigate(userDashboardRoute)}
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        borderRadius: '10px',
-                        fontSize: '14px',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        marginBottom: '10px',
-                      }}
-                    >
-                      <span>Open {user.role === 'doctor' ? 'Doctor Clinical Portal' : user.role === 'admin' ? 'Admin Dashboard' : 'Patient Portal'}</span>
-                      <ArrowRight size={16} />
-                    </button>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => navigate('/patient/doctors')}
-                        style={{ padding: '8px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, border: '1px solid #CBD5E1' }}
-                      >
-                        Browse Doctors
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => navigate('/login')}
-                        style={{ padding: '8px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, border: '1px solid #CBD5E1' }}
-                      >
-                        Switch Account
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  /* ── Logged Out State: Clean Portal Access & Quick Sign In ── */
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Lock size={14} color="#0284C7" />
-                        <span style={{ fontSize: '12px', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                          HealthSync Portal Sign In
-                        </span>
-                      </div>
-                      <span style={{ fontSize: '10px', fontWeight: 800, background: '#FEF3C7', color: '#92400E', padding: '2px 6px', borderRadius: '4px' }}>
-                        Beta Access
-                      </span>
-                    </div>
-
-                    <p style={{ fontSize: '12px', color: '#64748B', margin: '0 0 16px 0', lineHeight: 1.4 }}>
-                      Sign in to manage appointments, view clinical prescriptions, or access provider schedules.
-                    </p>
-
-                    {/* Standard Sign In & Register Buttons */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={() => navigate('/login')}
-                        style={{
-                          width: '100%',
-                          padding: '11px',
-                          borderRadius: '10px',
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                        }}
-                      >
-                        <span>Sign In with Email & Password</span>
-                        <ArrowRight size={15} />
-                      </button>
-
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => navigate('/register')}
-                        style={{
-                          width: '100%',
-                          padding: '9px',
-                          borderRadius: '8px',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          border: '1px solid #CBD5E1',
-                        }}
-                      >
-                        Create New Patient Account
-                      </button>
-                    </div>
-
-                    {/* 🧪 Beta Demo Quick Access Box */}
-                    <div style={{
-                      background: '#F8FAFC',
-                      border: '1px dashed #CBD5E1',
-                      borderRadius: '12px',
-                      padding: '10px 12px',
-                    }}>
-                      <p style={{ fontSize: '10px', fontWeight: 800, color: '#0369A1', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 8px 0' }}>
-                        ⚡ Beta Preview — Instant Demo Logins
-                      </p>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                        {[
-                          { role: 'Patient', email: 'rohan@patient.demo', pass: 'Patient@123456', icon: '👤', color: '#0284C7' },
-                          { role: 'Doctor', email: 'dr.priya@healthsync.demo', pass: 'Doctor@123456', icon: '🩺', color: '#059669' },
-                          { role: 'Admin', email: 'admin@healthsync.demo', pass: 'Admin@123456', icon: '🛡️', color: '#7C3AED' },
-                        ].map((d) => (
-                          <button
-                            key={d.role}
-                            type="button"
-                            onClick={() => handleQuickDemoLogin(d.email, d.pass)}
-                            style={{
-                              padding: '6px 4px',
-                              background: '#FFFFFF',
-                              border: '1px solid #E2E8F0',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                              textAlign: 'center',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              gap: '2px',
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              color: '#0F172A',
-                            }}
-                          >
-                            <span>{d.icon}</span>
-                            <span>{d.role}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                  </div>
-                )}
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* ── 2. "WHY CHOOSE HEALTHSYNC?" 4-FEATURE ICONS BAR (MATCHING APOLLO SCREENSHOT 1) ── */}
-      <section style={{ padding: 'var(--space-12) 0', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: 'var(--space-8)' }}>
-            <h2 style={{ fontSize: 'var(--text-3xl)', fontWeight: 800, color: '#0F172A' }}>
-              Why Choose HealthSync Hospitals?
-            </h2>
-            <p className="text-secondary text-sm" style={{ marginTop: 4 }}>
-              Delivering international healthcare excellence across India with certified clinical specialists.
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--space-5)' }}>
-            {[
-              {
-                icon: Stethoscope,
-                title: 'Senior Clinical Specialists',
-                desc: '20+ years experienced doctors, surgeons and superspecialists in your city.',
-              },
-              {
-                icon: Heart,
-                title: '50,000+ Surgeries & OPDs',
-                desc: 'Proven track record of high clinical success and compassionate post-care.',
-              },
-              {
-                icon: Shield,
-                title: 'Laser & Robotic Technology',
-                desc: 'Minimally invasive diagnostic tools, laparoscopic suites, and 24/7 labs.',
-              },
-              {
-                icon: Building2,
-                title: 'NABH / NABL Accredited',
-                desc: 'Tier-1 hospital standards, infection control, and sterile critical care units.',
-              },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="card card-hover"
-                style={{ textAlign: 'center', padding: 'var(--space-6)' }}
-              >
-                <div
+            {/* Quick Query Pills */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#94A3B8' }}>Try asking:</span>
+              {SEARCH_SUGGESTIONS.map((item, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleQuickSuggestion(item)}
                   style={{
-                    width: 60, height: 60, borderRadius: '50%',
-                    background: '#E0F2FE', color: '#0284C7',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    margin: '0 auto var(--space-4)',
+                    border: '1px solid #E2E8F0',
+                    background: '#FFFFFF',
+                    borderRadius: '9999px',
+                    padding: '4px 12px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: '#475569',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#4F46E5';
+                    e.currentTarget.style.color = '#4F46E5';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#E2E8F0';
+                    e.currentTarget.style.color = '#475569';
                   }}
                 >
-                  <item.icon size={28} />
-                </div>
-                <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 700, marginBottom: 'var(--space-2)' }}>{item.title}</h3>
-                <p className="text-secondary text-xs" style={{ lineHeight: 1.6 }}>{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 3. REAL DOCTORS PORTRAITS (MATCHING APOLLO SCREENSHOT 2) ── */}
-      <section style={{ padding: 'var(--space-16) 0' }}>
-        <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'var(--space-8)', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
-            <div>
-              <span className="badge badge-teal" style={{ marginBottom: '6px' }}>Verified Medical Faculty</span>
-              <h2 style={{ fontSize: 'var(--text-3xl)', fontWeight: 800, color: '#0F172A' }}>
-                Best Specialists & Doctors in {selectedCity}
-              </h2>
-              <p className="text-secondary text-sm" style={{ marginTop: 2 }}>
-                Consult highly experienced specialists for in-clinic and video appointments.
-              </p>
-            </div>
-
-            {/* City Selector Pills */}
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {POPULAR_CITIES.slice(0, 6).map((c) => (
-                <button
-                  key={c}
-                  className={`btn btn-sm ${selectedCity === c ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => handleCitySelect(c)}
-                  style={{ borderRadius: 'var(--radius-full)' }}
-                >
-                  {c}
+                  {item.text}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Real Doctor Cards Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 'var(--space-6)', marginBottom: 'var(--space-8)' }}>
-            {REAL_DOCTORS_PREVIEW.map((doc, idx) => (
-              <div
-                key={idx}
-                className="doctor-card"
-                onClick={() => navigate('/patient/doctors')}
-              >
-                {/* Doctor Portrait Photo Container */}
-                <div className="doctor-photo-container">
-                  <img
-                    src={doc.image}
-                    alt={doc.name}
-                    className="doctor-photo-img"
-                  />
-                  <div
-                    style={{
-                      position: 'absolute', top: 12, right: 12,
-                      background: 'rgba(255,255,255,0.95)', padding: '3px 8px',
-                      borderRadius: 'var(--radius-full)', display: 'flex', alignItems: 'center', gap: 4,
-                      boxShadow: 'var(--shadow-sm)', fontSize: '11px', fontWeight: 700, color: '#0F172A'
-                    }}
+          {/* Right Bento Column: Live System Pulse & 1-Click Evaluation (4 Cols) */}
+          <div className="bento-col-4" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            
+            {/* Live Metrics Card */}
+            <div className="glass-card" style={{ padding: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Live System Health
+                </span>
+                <span className="pulse-dot" />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '1rem' }}>
+                <div style={{ padding: '12px', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#4F46E5' }}>5 Min</div>
+                  <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>Atomic Slot Hold</div>
+                </div>
+                <div style={{ padding: '12px', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#10B981' }}>80% ↓</div>
+                  <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>Generic Drug Savings</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', color: '#475569' }}>
+                <Shield size={16} color="#10B981" />
+                <span>Zero Double-Booking Guarantee via MongoDB locks</span>
+              </div>
+            </div>
+
+            {/* Quick 1-Click Role Login Bento Box */}
+            <div className="glass-card-dark" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <Zap size={16} color="#F59E0B" />
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#FCD34D', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Instant Demo Portal Access
+                  </span>
+                </div>
+                <h3 style={{ color: '#FFFFFF', fontSize: '1.15rem', marginBottom: '1rem' }}>
+                  Evaluate Portals in 1-Click
+                </h3>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await login({ email: 'rohan@patient.demo', password: 'Patient@123456' });
+                    navigate('/patient');
+                  }}
+                  className="btn btn-sm"
+                  style={{ background: 'rgba(255, 255, 255, 0.1)', color: '#FFFFFF', border: '1px solid rgba(255, 255, 255, 0.2)', justifyContent: 'space-between' }}
+                >
+                  <span>👤 Patient Hub (Rohan)</span>
+                  <ChevronRight size={14} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await login({ email: 'dr.priya@healthsync.demo', password: 'Doctor@123456' });
+                    navigate('/doctor');
+                  }}
+                  className="btn btn-sm"
+                  style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#6EE7B7', border: '1px solid rgba(16, 185, 129, 0.4)', justifyContent: 'space-between' }}
+                >
+                  <span>🩺 Doctor Schedule (Dr. Priya)</span>
+                  <ChevronRight size={14} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await login({ email: 'admin@healthsync.demo', password: 'Admin@123456' });
+                    navigate('/admin');
+                  }}
+                  className="btn btn-sm"
+                  style={{ background: 'rgba(99, 102, 241, 0.2)', color: '#C7D2FE', border: '1px solid rgba(99, 102, 241, 0.4)', justifyContent: 'space-between' }}
+                >
+                  <span>🛡️ Admin Command Center</span>
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* 2. INTERACTIVE LIVE AI CLINICAL TRIAGE SIMULATOR */}
+        {/* ========================================================= */}
+        <div style={{ marginBottom: '4rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <span className="badge badge-indigo" style={{ marginBottom: '8px' }}>
+              <Brain size={13} />
+              Interactive Clinical Simulation
+            </span>
+            <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>
+              Live AI Symptom Triage Simulator
+            </h2>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
+              Tap any clinical scenario below to see real-time AI urgency classification & recommended specialist.
+            </p>
+          </div>
+
+          <div className="glass-card" style={{ padding: '2rem', border: '1.5px solid rgba(79, 70, 229, 0.2)' }}>
+            
+            {/* Scenario Chips */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', marginBottom: '2rem' }}>
+              {SYMPTOM_TRIAGE_SCENARIOS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveTriage(item)}
+                  className={`triage-option-chip ${activeTriage.id === item.id ? 'selected' : ''}`}
+                >
+                  <span style={{ fontSize: '1.25rem' }}>{item.icon}</span>
+                  <span style={{ textAlign: 'left' }}>{item.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Live Triage Output Visualizer */}
+            <div style={{
+              background: '#F8FAFC',
+              borderRadius: '16px',
+              padding: '1.75rem',
+              border: '1px solid #E2E8F0',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '2rem',
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+                  <span style={{
+                    padding: '4px 12px',
+                    borderRadius: '9999px',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    background: activeTriage.urgencyBg,
+                    color: activeTriage.urgencyColor,
+                    border: `1px solid ${activeTriage.urgencyColor}`,
+                  }}>
+                    Urgency Level: {activeTriage.urgency}
+                  </span>
+                  <span className="badge badge-indigo">
+                    Matched: {activeTriage.specialty}
+                  </span>
+                </div>
+
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem', color: '#0F172A' }}>
+                  AI Clinical Assessment
+                </h3>
+                <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.6, marginBottom: '1rem' }}>
+                  {activeTriage.advice}
+                </p>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/patient/doctors?q=${encodeURIComponent(activeTriage.specialty)}`)}
+                    className="btn btn-primary btn-sm btn-pill"
                   >
-                    <Star size={12} fill="#F59E0B" color="#F59E0B" /> {doc.rating}
+                    <span>Book {activeTriage.specialty} Specialist</span>
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Doctor Questions Synthesized */}
+              <div style={{ borderLeft: '1px solid #E2E8F0', paddingLeft: '1.5rem' }}>
+                <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.04em' }}>
+                  Suggested Pre-Visit Questions for Doctor:
+                </div>
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {activeTriage.suggestedQuestions.map((q, idx) => (
+                    <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: '#334155' }}>
+                      <Check size={14} color="#10B981" style={{ marginTop: '3px', flexShrink: 0 }} />
+                      <span>{q}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* 3. INTERACTIVE JAN AUSHADHI GENERIC MEDICINE CALCULATOR */}
+        {/* ========================================================= */}
+        <div style={{ marginBottom: '4rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <span className="badge badge-emerald" style={{ marginBottom: '8px' }}>
+              <Pill size={13} />
+              Govt PMBJK Jan Aushadhi Intelligence
+            </span>
+            <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>
+              Generic vs. Branded Medicine Price Calculator
+            </h2>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
+              See how much you save on identical salt compositions with PM Jan Aushadhi generic equivalents.
+            </p>
+          </div>
+
+          <div className="glass-card" style={{ padding: '2rem', border: '1.5px solid rgba(16, 185, 129, 0.2)' }}>
+            
+            {/* Medicine Tabs */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '2rem', justifyContent: 'center' }}>
+              {MEDICINES_DATABASE.map((med, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedMedIndex(idx)}
+                  className={`pill-tab ${selectedMedIndex === idx ? 'active' : ''}`}
+                >
+                  <Pill size={14} />
+                  <span>{med.name}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Price Comparison Display */}
+            <div style={{
+              background: '#F8FAFC',
+              borderRadius: '16px',
+              padding: '2rem',
+              border: '1px solid #E2E8F0',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#10B981', textTransform: 'uppercase' }}>
+                    Active Salt Composition
+                  </div>
+                  <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A' }}>
+                    {selectedMed.name} ({selectedMed.quantity})
+                  </h3>
+                  <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 600 }}>
+                    Salt: {selectedMed.salt}
                   </div>
                 </div>
 
-                {/* Doctor Details Body */}
-                <div className="doctor-card-body">
-                  <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 800, color: '#0F172A', marginBottom: '2px' }}>
-                    {doc.name}
-                  </h3>
-                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#0284C7', marginBottom: '4px' }}>
-                    {doc.specialty}
-                  </p>
-                  <p className="text-secondary text-xs" style={{ marginBottom: 'var(--space-3)' }}>
-                    ⏱️ {doc.experience} · {doc.hospital}
-                  </p>
-
-                  <div style={{ marginTop: 'auto', paddingTop: 'var(--space-3)', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <p className="text-muted" style={{ fontSize: '10px' }}>Consultation Fee</p>
-                      <p style={{ fontSize: '14px', fontWeight: 800, color: '#0F172A' }}>{doc.fee}</p>
-                    </div>
+                {/* Quantity Selector */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#475569' }}>Number of Packs:</span>
+                  <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #CBD5E1', borderRadius: '8px', background: '#FFFFFF', overflow: 'hidden' }}>
                     <button
-                      className="btn btn-primary btn-sm"
-                      onClick={(e) => { e.stopPropagation(); navigate('/patient/doctors'); }}
+                      type="button"
+                      onClick={() => setMedQuantity(Math.max(1, medQuantity - 1))}
+                      style={{ padding: '6px 12px', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 700 }}
                     >
-                      Book Consultation
+                      -
+                    </button>
+                    <span style={{ padding: '6px 12px', fontWeight: 800, color: '#0F172A', minWidth: '30px', textAlign: 'center' }}>
+                      {medQuantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setMedQuantity(medQuantity + 1)}
+                      style={{ padding: '6px 12px', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 700 }}
+                    >
+                      +
                     </button>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
 
-          <div style={{ textAlign: 'center' }}>
-            <button
-              className="btn btn-amber btn-lg"
-              onClick={() => navigate('/patient/doctors')}
-              style={{ padding: '12px 32px', fontSize: '16px' }}
-            >
-              Book Your Appointment Now <ChevronRight size={18} />
-            </button>
+              {/* Comparison Bars */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', alignItems: 'center' }}>
+                
+                {/* Branded Box */}
+                <div style={{ padding: '1.25rem', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748B' }}>Standard Branded Price</div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#64748B', textDecoration: 'line-through' }}>
+                    ₹{totalBranded}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>₹{selectedMed.brandedPrice} / pack</div>
+                </div>
+
+                {/* Jan Aushadhi Box */}
+                <div style={{ padding: '1.25rem', background: '#ECFDF5', borderRadius: '12px', border: '1.5px solid #10B981' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#065F46' }}>PM Jan Aushadhi (Generic)</div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#059669' }}>
+                    ₹{totalJanAushadhi}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#047857', fontWeight: 600 }}>₹{selectedMed.janAushadhiPrice} / pack</div>
+                </div>
+
+                {/* Total Savings Hero Box */}
+                <div style={{ padding: '1.25rem', background: 'linear-gradient(135deg, #10B981, #059669)', borderRadius: '12px', color: '#FFFFFF', textAlign: 'center' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, opacity: 0.9 }}>Your Instant Savings</div>
+                  <div style={{ fontSize: '2rem', fontWeight: 900 }}>
+                    ₹{totalSavings}
+                  </div>
+                  <div style={{ fontSize: '11px', fontWeight: 700, background: 'rgba(255, 255, 255, 0.2)', padding: '2px 8px', borderRadius: '9999px', display: 'inline-block' }}>
+                    {selectedMed.savingsPercent}% Discount
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
           </div>
         </div>
-      </section>
 
-      {/* ── 4. 6 CORE MEDICAL DEPARTMENTS ── */}
-      <section style={{ padding: 'var(--space-16) 0', background: '#F8FAFC', borderTop: '1px solid #E2E8F0' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: 'var(--space-10)' }}>
-            <span className="badge badge-teal" style={{ marginBottom: '6px' }}>Comprehensive Medical Specialties</span>
-            <h2 style={{ fontSize: 'var(--text-3xl)', fontWeight: 800 }}>Explore Care by Department</h2>
-            <p className="text-secondary text-sm" style={{ marginTop: 2 }}>
-              Choose your specialty to see verified hospital doctors and available appointment slots.
-            </p>
+        {/* ========================================================= */}
+        {/* 4. CLINICAL SPECIALTY DEPARTMENTS */}
+        {/* ========================================================= */}
+        <div style={{ marginBottom: '4rem' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <span className="badge badge-indigo" style={{ marginBottom: '8px' }}>
+                <Stethoscope size={13} />
+                Multi-City Clinical Grid
+              </span>
+              <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>
+                Explore Clinical Departments
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => navigate('/patient/doctors')}
+              className="btn btn-secondary btn-sm"
+              style={{ fontWeight: 700 }}
+            >
+              <span>View All Specialists</span>
+              <ArrowRight size={14} />
+            </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 'var(--space-4)' }}>
-            {CORE_SPECIALTIES.map((spec) => (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+            {SPECIALTY_DEPARTMENTS.map((dept) => (
               <div
-                key={spec.id}
-                className="card card-hover"
-                style={{ padding: 'var(--space-5)', cursor: 'pointer', textAlign: 'center' }}
-                onClick={() => handleSpecialtyClick(spec.id)}
+                key={dept.id}
+                onClick={() => navigate(`/patient/doctors?q=${encodeURIComponent(dept.id)}`)}
+                className="glass-card"
+                style={{ padding: '1.5rem', cursor: 'pointer', position: 'relative' }}
               >
-                <div style={{ fontSize: '32px', marginBottom: 'var(--space-2)' }}>{spec.icon}</div>
-                <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>
-                  {spec.label}
-                </h4>
-                <p className="text-secondary" style={{ fontSize: '11px', lineHeight: 1.4 }}>
-                  {spec.desc}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                  <span style={{ fontSize: '2rem' }}>{dept.icon}</span>
+                  <span className="badge badge-emerald" style={{ fontSize: '11px' }}>
+                    {dept.doctors}
+                  </span>
+                </div>
+
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '0.4rem', color: '#0F172A' }}>
+                  {dept.label}
+                </h3>
+                <p style={{ fontSize: '12px', color: '#64748B', marginBottom: '1rem', lineHeight: 1.5 }}>
+                  {dept.desc}
                 </p>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, color: '#4F46E5' }}>
+                  <span>Check Available 30-min Slots</span>
+                  <ChevronRight size={14} />
+                </div>
               </div>
             ))}
           </div>
         </div>
-      </section>
 
-      {/* ── 5. EMERGENCY CONTACT & TRUST BANNER ── */}
-      <section style={{ background: '#005E83', color: 'white', padding: 'var(--space-12) 0', textAlign: 'center' }}>
-        <div className="container">
-          <h2 style={{ fontSize: 'var(--text-3xl)', fontWeight: 800, color: '#FFFFFF', marginBottom: 'var(--space-2)' }}>
-            Need Immediate Medical Assistance?
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: 'var(--text-base)', maxWidth: 600, margin: '0 auto var(--space-6)' }}>
-            Our 24/7 critical care helpline connects you directly with ambulance dispatch and emergency OPDs across {selectedCity}.
-          </p>
-
-          <div style={{ display: 'flex', gap: 'var(--space-4)', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a
-              href="tel:18004197979"
-              className="btn btn-amber btn-lg"
-              style={{ fontSize: '17px', padding: '14px 28px' }}
-            >
-              <Phone size={20} /> Call 1800-419-7979 (Toll Free)
-            </a>
-            <button
-              className="btn btn-secondary btn-lg"
-              onClick={() => navigate('/patient/doctors')}
-              style={{ background: 'white', color: '#005E83', fontWeight: 700 }}
-            >
-              Book In-Clinic Appointment
-            </button>
-          </div>
-        </div>
-      </section>
-
+      </div>
     </div>
   );
 }
