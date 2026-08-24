@@ -169,12 +169,28 @@ Rules:
 /**
  * Fallback for post-visit summary
  */
-const postVisitFallback = (input) => ({
-  patientFriendlySummary: `Your doctor has completed your consultation and provided clinical notes. ${input.diagnosis ? `Diagnosis: ${input.diagnosis}.` : ''} Please follow the prescription as directed and contact the clinic if symptoms worsen.`,
-  medicationTimetable: [],
-  warningFlags: ['Detailed AI summary pending — please follow doctor\'s prescription carefully'],
-  nextCheckupDeadline: input.followUpDays ? `${input.followUpDays} days` : 'As advised by your doctor',
-});
+const postVisitFallback = (input) => {
+  const timetable = (input.prescription?.medications || []).map((m) => {
+    const isNight = (m.frequency || '').toLowerCase().includes('bedtime') || (m.frequency || '').toLowerCase().includes('night');
+    const isMorning = (m.frequency || '').toLowerCase().includes('morning') || (m.timing === 'before_food');
+    const timeStr = isNight ? '09:00 PM' : isMorning ? '08:00 AM' : '09:00 AM';
+    const instr = m.specialInstructions || (m.timing === 'after_food' ? 'Take after meals' : m.timing === 'before_food' ? 'Take before breakfast' : 'Take with water');
+    return {
+      time: timeStr,
+      medications: [`${m.name} ${m.dosage || ''}`.trim()],
+      instructions: instr,
+    };
+  });
+
+  return {
+    patientFriendlySummary: `Your doctor has completed your consultation and provided clinical notes. ${input.diagnosis ? `Diagnosis: ${input.diagnosis}.` : ''} Please follow your prescribed medication schedule carefully and return if symptoms persist.`,
+    medicationTimetable: timetable,
+    warningFlags: input.prescription?.warnings?.length
+      ? input.prescription.warnings
+      : ['Follow prescribed medication timetable strictly', 'Seek medical attention if chest pain or shortness of breath occurs'],
+    nextCheckupDeadline: input.followUpDays ? `${input.followUpDays} days` : '14 days',
+  };
+};
 
 /**
  * Generate patient-friendly post-visit prescription summary.
@@ -216,7 +232,7 @@ Rules:
 - warningFlags should be genuinely important — empty array if no warnings`;
 
   const fallback = () => ({
-    ...postVisitFallback({ diagnosis, followUpDays: prescription?.followUpDays }),
+    ...postVisitFallback({ diagnosis, followUpDays: prescription?.followUpDays, prescription }),
     status: 'PENDING_RETRY',
     processingTimeMs: Date.now() - startTime,
     model: 'fallback-heuristic',

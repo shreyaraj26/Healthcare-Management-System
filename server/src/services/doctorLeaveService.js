@@ -12,6 +12,7 @@ const Appointment = require('../models/Appointment');
 const { APPOINTMENT_STATUS } = require('../models/Appointment');
 const { queueNotification, templates, JOB_TYPE } = require('./notificationService');
 const { deleteCalendarEvent } = require('./calendarService');
+const { withOptionalTransaction } = require('../utils/transactionHelper');
 const User = require('../models/User');
 const ApiError = require('../utils/ApiError');
 const env = require('../config/env');
@@ -44,105 +45,102 @@ const applyDoctorLeave = async (doctorId, { startDate, endDate, reason }) => {
   if (!doctorProfile) throw ApiError.notFound('Doctor profile not found.');
 
   let conflictingAppointments = [];
-  const session = await mongoose.startSession();
 
-  try {
-    await session.withTransaction(async () => {
-      // Step 1: Record leave in doctor profile
-      await DoctorProfile.findOneAndUpdate(
-        { userId: doctorId },
-        { $push: { leaveCalendar: { startDate: start, endDate: end, reason: reason || 'Leave' } } },
-        { session }
+  await withOptionalTransaction(async (session) => {
+    const opts = session ? { session } : {};
+
+    // Step 1: Record leave in doctor profile
+    await DoctorProfile.findOneAndUpdate(
+      { userId: doctorId },
+      { $push: { leaveCalendar: { startDate: start, endDate: end, reason: reason || 'Leave' } } },
+      opts
+    );
+
+    // Step 2: Block all AVAILABLE slots
+    await Slot.updateMany(
+      {
+        doctorId,
+        startTime: { $gte: start, $lte: end },
+        status: SLOT_STATUS.AVAILABLE,
+      },
+      { $set: { status: SLOT_STATUS.BLOCKED_LEAVE } },
+      opts
+    );
+
+    // Step 3: Release HELD slots → BLOCKED_LEAVE
+    await Slot.updateMany(
+      {
+        doctorId,
+        startTime: { $gte: start, $lte: end },
+        status: SLOT_STATUS.HELD,
+      },
+      {
+        $set: {
+          status: SLOT_STATUS.BLOCKED_LEAVE,
+          holdToken: null,
+          holdExpiresAt: null,
+          heldByPatientId: null,
+        },
+      },
+      opts
+    );
+
+    // Step 4: Find all CONFIRMED appointments in conflict window
+    conflictingAppointments = await Appointment.find(
+      {
+        doctorId,
+        scheduledAt: { $gte: start, $lte: end },
+        status: APPOINTMENT_STATUS.CONFIRMED,
+      },
+      null,
+      opts
+    ).populate('patientId', 'firstName lastName email');
+
+    logger.info(
+      `[DoctorLeaveService] Found ${conflictingAppointments.length} conflicting appointments for leave ${startDate}–${endDate}`
+    );
+
+    // Step 5: Cancel appointments and generate reschedule tokens
+    for (const appt of conflictingAppointments) {
+      const rescheduleToken = jwt.sign(
+        { appointmentId: appt._id, patientId: appt.patientId._id },
+        env.JWT_SECRET,
+        { expiresIn: '7d' }
       );
 
-      // Step 2: Block all AVAILABLE slots
-      await Slot.updateMany(
+      await Appointment.findByIdAndUpdate(
+        appt._id,
         {
-          doctorId,
-          startTime: { $gte: start, $lte: end },
-          status: SLOT_STATUS.AVAILABLE,
-        },
-        { $set: { status: SLOT_STATUS.BLOCKED_LEAVE } },
-        { session }
-      );
-
-      // Step 3: Release HELD slots → BLOCKED_LEAVE
-      await Slot.updateMany(
-        {
-          doctorId,
-          startTime: { $gte: start, $lte: end },
-          status: SLOT_STATUS.HELD,
-        },
-        {
-          $set: {
-            status: SLOT_STATUS.BLOCKED_LEAVE,
-            holdToken: null,
-            holdExpiresAt: null,
-            heldByPatientId: null,
-          },
-        },
-        { session }
-      );
-
-      // Step 4: Find all CONFIRMED appointments in conflict window
-      conflictingAppointments = await Appointment.find(
-        {
-          doctorId,
-          scheduledAt: { $gte: start, $lte: end },
-          status: APPOINTMENT_STATUS.CONFIRMED,
-        },
-        null,
-        { session }
-      ).populate('patientId', 'firstName lastName email');
-
-      logger.info(
-        `[DoctorLeaveService] Found ${conflictingAppointments.length} conflicting appointments for leave ${startDate}–${endDate}`
-      );
-
-      // Step 5: Cancel appointments and generate reschedule tokens
-      for (const appt of conflictingAppointments) {
-        const rescheduleToken = jwt.sign(
-          { appointmentId: appt._id, patientId: appt.patientId._id },
-          env.JWT_SECRET,
-          { expiresIn: '7d' }
-        );
-
-        await Appointment.findByIdAndUpdate(
-          appt._id,
-          {
-            status: APPOINTMENT_STATUS.CANCELLED_DOCTOR_LEAVE,
-            cancellationReason: `Doctor on scheduled leave: ${reason || 'No reason provided'}`,
-            rescheduleToken,
-            rescheduleTokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          },
-          { session }
-        );
-
-        // Queue priority reschedule email notification
-        const patient = appt.patientId;
-        const rescheduleLink = `${env.CLIENT_URL}/reschedule?token=${rescheduleToken}`;
-        const { subject, html } = templates.doctorLeaveNotice({
-          patientName: `${patient.firstName} ${patient.lastName}`,
-          doctorName: `${doctor.firstName} ${doctor.lastName}`,
-          originalDate: appt.scheduledAt,
+          status: APPOINTMENT_STATUS.CANCELLED_DOCTOR_LEAVE,
+          cancellationReason: `Doctor on scheduled leave: ${reason || 'No reason provided'}`,
           rescheduleToken,
-          rescheduleLink,
-        });
+          rescheduleTokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+        opts
+      );
 
-        await queueNotification({
-          type: JOB_TYPE.DOCTOR_LEAVE_NOTICE,
-          recipientId: patient._id,
-          recipientEmail: patient.email,
-          subject,
-          htmlBody: html,
-          appointmentId: appt._id,
-          metadata: { rescheduleToken, rescheduleLink },
-        }, { session: null }); // Notifications are non-transactional (idempotent)
-      }
-    });
-  } finally {
-    await session.endSession();
-  }
+      // Queue priority reschedule email notification
+      const patient = appt.patientId;
+      const rescheduleLink = `${env.CLIENT_URL}/reschedule?token=${rescheduleToken}`;
+      const { subject, html } = templates.doctorLeaveNotice({
+        patientName: `${patient.firstName} ${patient.lastName}`,
+        doctorName: `${doctor.firstName} ${doctor.lastName}`,
+        originalDate: appt.scheduledAt,
+        rescheduleToken,
+        rescheduleLink,
+      });
+
+      await queueNotification({
+        type: JOB_TYPE.DOCTOR_LEAVE_NOTICE,
+        recipientId: patient._id,
+        recipientEmail: patient.email,
+        subject,
+        htmlBody: html,
+        appointmentId: appt._id,
+        metadata: { rescheduleToken, rescheduleLink },
+      }, { session: null }); // Notifications are non-transactional (idempotent)
+    }
+  });
 
   // Step 6: Async Google Calendar cleanup
   setImmediate(async () => {

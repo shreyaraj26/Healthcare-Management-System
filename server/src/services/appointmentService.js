@@ -14,6 +14,7 @@ const { analyzePreVisitSymptoms, generatePostVisitSummary } = require('./llmServ
 const { queueNotification, templates, JOB_TYPE } = require('./notificationService');
 const { createCalendarEvent, deleteCalendarEvent, updateCalendarEvent } = require('./calendarService');
 const { parseReminderTimes } = require('../utils/reminderTimeParser');
+const { withOptionalTransaction } = require('../utils/transactionHelper');
 const ApiError = require('../utils/ApiError');
 const env = require('../config/env');
 const logger = require('../utils/logger');
@@ -108,42 +109,37 @@ const createAppointment = async ({
     throw ApiError.badRequest('This doctor is a reference directory profile and is not available for direct booking on HealthSync.');
   }
 
-  // === ATOMIC TRANSACTION ===
-  const session = await mongoose.startSession();
-  let appointment;
+  // === ATOMIC TRANSACTION (Supports Replica Set & Standalone) ===
+  const appointment = await withOptionalTransaction(async (session) => {
+    const opts = session ? { session } : {};
 
-  try {
-    await session.withTransaction(async () => {
-      // Phase 2: Confirm slot booking (validates holdToken atomically)
-      await confirmSlotBooking(slotId, holdToken, null, session);
+    // Phase 2: Confirm slot booking (validates holdToken atomically)
+    await confirmSlotBooking(slotId, holdToken, null, session);
 
-      // Create appointment
-      const [newAppt] = await Appointment.create([{
-        patientId,
-        doctorId: slot.doctorId,
-        slotId,
-        scheduledAt: slot.startTime,
-        symptoms,
-        symptomDuration,
-        severity,
-        previousConditions: previousConditions || [],
-        currentMedications: currentMedications || [],
-        status: APPOINTMENT_STATUS.CONFIRMED,
-        'preVisitAI.status': AI_STATUS.PENDING,
-      }], { session });
+    // Create appointment
+    const [newAppt] = await Appointment.create([{
+      patientId,
+      doctorId: slot.doctorId,
+      slotId,
+      scheduledAt: slot.startTime,
+      symptoms,
+      symptomDuration,
+      severity,
+      previousConditions: previousConditions || [],
+      currentMedications: currentMedications || [],
+      status: APPOINTMENT_STATUS.CONFIRMED,
+      'preVisitAI.status': AI_STATUS.PENDING,
+    }], opts);
 
-      // Update slot with appointmentId
-      await mongoose.model('Slot').findByIdAndUpdate(
-        slotId,
-        { appointmentId: newAppt._id },
-        { session }
-      );
+    // Update slot with appointmentId
+    await mongoose.model('Slot').findByIdAndUpdate(
+      slotId,
+      { appointmentId: newAppt._id },
+      opts
+    );
 
-      appointment = newAppt;
-    });
-  } finally {
-    await session.endSession();
-  }
+    return newAppt;
+  });
 
   logger.info(`[AppointmentService] Appointment ${appointment._id} created for patient ${patientId}`);
 
@@ -413,19 +409,15 @@ const cancelAppointment = async (appointmentId, userId, userRole, reason) => {
     admin: APPOINTMENT_STATUS.CANCELLED_BY_DOCTOR,
   };
 
-  const session = await mongoose.startSession();
-  try {
-    await session.withTransaction(async () => {
-      await Appointment.findByIdAndUpdate(
-        appointmentId,
-        { status: statusMap[userRole], cancellationReason: reason },
-        { session }
-      );
-      await releaseSlotOnCancellation(appointment.slotId, session);
-    });
-  } finally {
-    await session.endSession();
-  }
+  await withOptionalTransaction(async (session) => {
+    const opts = session ? { session } : {};
+    await Appointment.findByIdAndUpdate(
+      appointmentId,
+      { status: statusMap[userRole], cancellationReason: reason },
+      opts
+    );
+    await releaseSlotOnCancellation(appointment.slotId, session);
+  });
 
   // Delete calendar event async
   setImmediate(async () => {
@@ -518,51 +510,45 @@ const rescheduleWithToken = async ({ token, newSlotId, holdToken }) => {
     DoctorProfile.findOne({ userId: slot.doctorId }),
   ]);
 
-  const session = await mongoose.startSession();
-  let newAppointment;
+  const newAppointment = await withOptionalTransaction(async (session) => {
+    const opts = session ? { session } : {};
+    // 1. Confirm slot
+    await confirmSlotBooking(newSlotId, holdToken, null, session);
 
-  try {
-    await session.withTransaction(async () => {
-      // 1. Confirm slot
-      await confirmSlotBooking(newSlotId, holdToken, null, session);
+    // 2. Create new appointment retaining clinical data
+    const [newAppt] = await Appointment.create([{
+      patientId: appointment.patientId._id || appointment.patientId,
+      doctorId: slot.doctorId,
+      slotId: newSlotId,
+      scheduledAt: slot.startTime,
+      symptoms: appointment.symptoms,
+      symptomDuration: appointment.symptomDuration,
+      severity: appointment.severity,
+      previousConditions: appointment.previousConditions || [],
+      currentMedications: appointment.currentMedications || [],
+      status: APPOINTMENT_STATUS.CONFIRMED,
+      'preVisitAI.status': AI_STATUS.PENDING,
+    }], opts);
 
-      // 2. Create new appointment retaining clinical data
-      const [newAppt] = await Appointment.create([{
-        patientId: appointment.patientId._id || appointment.patientId,
-        doctorId: slot.doctorId,
-        slotId: newSlotId,
-        scheduledAt: slot.startTime,
-        symptoms: appointment.symptoms,
-        symptomDuration: appointment.symptomDuration,
-        severity: appointment.severity,
-        previousConditions: appointment.previousConditions || [],
-        currentMedications: appointment.currentMedications || [],
-        status: APPOINTMENT_STATUS.CONFIRMED,
-        'preVisitAI.status': AI_STATUS.PENDING,
-      }], { session });
+    // 3. Mark old appointment as reschedule completed
+    await Appointment.findByIdAndUpdate(
+      appointment._id,
+      {
+        rescheduleToken: null,
+        cancellationReason: `${appointment.cancellationReason || ''} [Rescheduled to ${newAppt._id}]`,
+      },
+      opts
+    );
 
-      // 3. Mark old appointment as reschedule completed
-      await Appointment.findByIdAndUpdate(
-        appointment._id,
-        {
-          rescheduleToken: null,
-          cancellationReason: `${appointment.cancellationReason || ''} [Rescheduled to ${newAppt._id}]`,
-        },
-        { session }
-      );
+    // 4. Update slot with appointment ID
+    await mongoose.model('Slot').findByIdAndUpdate(
+      newSlotId,
+      { appointmentId: newAppt._id },
+      opts
+    );
 
-      // 4. Update slot with appointment ID
-      await mongoose.model('Slot').findByIdAndUpdate(
-        newSlotId,
-        { appointmentId: newAppt._id },
-        { session }
-      );
-
-      newAppointment = newAppt;
-    });
-  } finally {
-    await session.endSession();
-  }
+    return newAppt;
+  });
 
   logger.info(`[AppointmentService] Priority reschedule completed: old ${appointment._id} -> new ${newAppointment._id}`);
 
