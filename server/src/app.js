@@ -28,15 +28,21 @@ const createApp = () => {
   // ── CORS ─────────────────────────────────────────────────
   const allowedOrigins = (env.CLIENT_URL || 'http://localhost:5173')
     .split(',')
-    .map(o => o.trim());
+    .map(o => o.trim().replace(/\/+$/, ''));
 
   app.use(cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (curl, Postman, server-to-server)
       if (!origin) return callback(null, true);
-      // Allow any vercel.app subdomain or explicitly listed origins
-      const isVercel = /\.vercel\.app$/.test(origin);
-      if (isVercel || allowedOrigins.includes(origin)) {
+      const cleanOrigin = origin.replace(/\/+$/, '');
+      let hostname = '';
+      try {
+        hostname = new URL(origin).hostname;
+      } catch (e) {
+        hostname = origin;
+      }
+      const isVercel = hostname.endsWith('.vercel.app') || hostname === 'vercel.app';
+      if (isVercel || allowedOrigins.includes(cleanOrigin) || allowedOrigins.includes('*')) {
         return callback(null, true);
       }
       callback(new Error(`CORS: Origin '${origin}' not allowed.`));
