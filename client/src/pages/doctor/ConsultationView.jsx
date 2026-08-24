@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Brain, User, Pill, ChevronLeft, Plus, Trash2, CheckCircle } from 'lucide-react';
+import { Brain, User, Pill, ChevronLeft, Plus, Trash2, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { api } from '../../services/api';
 import { useToast } from '../../components/ui/NotificationToast';
 
@@ -25,6 +25,12 @@ export default function ConsultationView() {
   const [medications, setMedications] = useState([{ ...EMPTY_MED }]);
   const [warnings, setWarnings] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const pollRef = useRef(null);
+
+  const fetchAppt = () =>
+    api.appointments.getById(id)
+      .then((d) => setAppt(d.data))
+      .catch(() => {});
 
   useEffect(() => {
     api.appointments.getById(id)
@@ -32,6 +38,18 @@ export default function ConsultationView() {
       .catch(() => addToast('Failed to load appointment', 'error'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  // Poll every 4 s while AI is still PENDING
+  useEffect(() => {
+    if (appt?.preVisitAI?.status === 'PENDING') {
+      pollRef.current = setInterval(() => {
+        fetchAppt();
+      }, 4000);
+    } else {
+      clearInterval(pollRef.current);
+    }
+    return () => clearInterval(pollRef.current);
+  }, [appt?.preVisitAI?.status]);
 
   const addMed = () => setMedications([...medications, { ...EMPTY_MED }]);
   const removeMed = (i) => setMedications(medications.filter((_, idx) => idx !== i));
@@ -51,7 +69,7 @@ export default function ConsultationView() {
         },
       });
       setSubmitted(true);
-      addToast('Clinical notes saved. AI prescription summary is being generated.', 'success');
+      addToast('Clinical notes saved. AI is generating patient summary & queuing medication reminders.', 'success');
     } catch (err) {
       addToast(err.message, 'error');
     } finally {
@@ -64,6 +82,7 @@ export default function ConsultationView() {
 
   const { preVisitAI, patientId } = appt;
   const urgencyConf = URGENCY_CONFIG[preVisitAI?.urgencyLevel] || URGENCY_CONFIG.Low;
+  const aiIsPending = !preVisitAI?.chiefComplaint || preVisitAI?.status === 'PENDING';
 
   if (submitted) return (
     <div className="page"><div className="container-sm">
@@ -72,7 +91,12 @@ export default function ConsultationView() {
           <CheckCircle size={40} color="var(--color-accent-emerald)" />
         </div>
         <h2 style={{ fontSize: 'var(--text-2xl)', fontWeight: 800, marginBottom: 'var(--space-3)' }}>Consultation Complete</h2>
-        <p className="text-secondary" style={{ marginBottom: 'var(--space-6)' }}>Clinical notes saved. AI is generating a patient-friendly prescription summary.</p>
+        <p className="text-secondary" style={{ marginBottom: 'var(--space-4)' }}>Clinical notes saved. Post-visit summary email is being sent to the patient.</p>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: 'var(--space-4)' }}>
+          {['✉️ Summary Email Queued', '💊 Medication Reminders Set', '🤖 AI Summary Generating'].map(t => (
+            <span key={t} style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: 700, color: '#10b981' }}>{t}</span>
+          ))}
+        </div>
         <button className="btn btn-primary" onClick={() => navigate('/doctor')}>Return to Schedule</button>
       </div>
     </div></div>
@@ -91,33 +115,56 @@ export default function ConsultationView() {
           </div>
         </div>
 
-        {/* AI Pre-visit Insights */}
-        {preVisitAI?.chiefComplaint && (
-          <div className="card" style={{ marginBottom: 'var(--space-6)', borderLeft: `4px solid ${urgencyConf.border}`, background: 'rgba(139,92,246,0.03)' }}>
+        {/* AI Pre-visit Insights — with PENDING state */}
+        {aiIsPending ? (
+          <div className="card" style={{ marginBottom: 'var(--space-6)', borderLeft: '4px solid #7c3aed', background: 'rgba(139,92,246,0.04)', position: 'relative', overflow: 'hidden' }}>
+            {/* Shimmer top bar */}
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg,#7c3aed,#0284c7,#7c3aed)', backgroundSize: '200% 100%', animation: 'shimmer 1.8s linear infinite' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
-              <Brain size={20} color="var(--color-accent-violet)" />
+              <Loader2 size={20} color="#7c3aed" style={{ animation: 'spin 1s linear infinite' }} />
               <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 700 }}>AI Pre-Visit Briefing</h2>
-              <span className={`badge ${urgencyConf.badge}`}>{preVisitAI.urgencyLevel} Priority</span>
+              <span className="badge badge-amber" style={{ fontSize: '10px' }}>Analyzing…</span>
             </div>
-            <div style={{ marginBottom: 'var(--space-4)' }}>
-              <p className="text-xs text-muted font-semibold" style={{ marginBottom: 4 }}>CHIEF COMPLAINT</p>
-              <p className="text-sm">{preVisitAI.chiefComplaint}</p>
+            <p className="text-sm text-secondary">Gemini AI is analyzing the patient's reported symptoms and generating a clinical briefing. This page will refresh automatically.</p>
+            {/* Skeleton lines */}
+            <div style={{ marginTop: 'var(--space-4)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[80, 60, 90, 50].map((w, i) => (
+                <div key={i} style={{ height: 12, borderRadius: 6, background: 'rgba(255,255,255,0.06)', width: `${w}%`, animation: `pulse 1.5s ease-in-out ${i * 0.15}s infinite` }} />
+              ))}
             </div>
-            <div style={{ marginBottom: 'var(--space-4)' }}>
-              <p className="text-xs text-muted font-semibold" style={{ marginBottom: 8 }}>PATIENT'S SYMPTOMS</p>
-              <p className="text-sm" style={{ padding: 'var(--space-3)', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)' }}>{appt.symptoms}</p>
-            </div>
-            {preVisitAI.suggestedDoctorQuestions?.length > 0 && (
-              <div>
-                <p className="text-xs text-muted font-semibold" style={{ marginBottom: 8 }}>SUGGESTED QUESTIONS</p>
-                {preVisitAI.suggestedDoctorQuestions.map((q, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-2)', padding: 'var(--space-3)', background: 'rgba(139,92,246,0.05)', borderRadius: 'var(--radius-md)' }}>
-                    <span style={{ fontWeight: 700, color: 'var(--color-accent-violet)', minWidth: 20 }}>Q{i+1}</span>
-                    <p className="text-sm">{q}</p>
-                  </div>
-                ))}
+            {appt.symptoms && (
+              <div style={{ marginTop: 'var(--space-4)', padding: 'var(--space-3)', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)' }}>
+                <p className="text-xs text-muted font-semibold" style={{ marginBottom: 4 }}>RAW PATIENT SYMPTOMS (from intake form)</p>
+                <p className="text-sm">{appt.symptoms}</p>
               </div>
             )}
+          </div>
+        ) : (
+        <div className="card" style={{ marginBottom: 'var(--space-6)', borderLeft: `4px solid ${urgencyConf.border}`, background: 'rgba(139,92,246,0.03)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+            <Brain size={20} color="var(--color-accent-violet)" />
+            <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 700 }}>AI Pre-Visit Briefing</h2>
+            <span className={`badge ${urgencyConf.badge}`}>{preVisitAI.urgencyLevel} Priority</span>
+          </div>
+          <div style={{ marginBottom: 'var(--space-4)' }}>
+            <p className="text-xs text-muted font-semibold" style={{ marginBottom: 4 }}>CHIEF COMPLAINT</p>
+            <p className="text-sm">{preVisitAI.chiefComplaint}</p>
+          </div>
+          <div style={{ marginBottom: 'var(--space-4)' }}>
+            <p className="text-xs text-muted font-semibold" style={{ marginBottom: 8 }}>PATIENT'S SYMPTOMS</p>
+            <p className="text-sm" style={{ padding: 'var(--space-3)', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)' }}>{appt.symptoms}</p>
+          </div>
+          {preVisitAI.suggestedDoctorQuestions?.length > 0 && (
+            <div>
+              <p className="text-xs text-muted font-semibold" style={{ marginBottom: 8 }}>SUGGESTED QUESTIONS</p>
+              {preVisitAI.suggestedDoctorQuestions.map((q, i) => (
+                <div key={i} style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-2)', padding: 'var(--space-3)', background: 'rgba(139,92,246,0.05)', borderRadius: 'var(--radius-md)' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--color-accent-violet)', minWidth: 20 }}>Q{i+1}</span>
+                  <p className="text-sm">{q}</p>
+                </div>
+              ))}
+            </div>
+          )}
           </div>
         )}
 

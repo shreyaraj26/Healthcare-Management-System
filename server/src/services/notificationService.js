@@ -157,6 +157,90 @@ const templates = {
       </div>
     `,
   }),
+
+  postVisitSummary: ({ patientName, doctorName, diagnosis, aiSummary, medications, warningFlags, nextCheckup, appointmentId }) => ({
+    subject: `📋 Your Post-Visit Health Summary — Dr. ${doctorName}`,
+    html: `
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; color: #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #0f2942 0%, #0284c7 100%); padding: 32px 40px;">
+          <h1 style="margin: 0; color: white; font-size: 22px;">PulseCare Healthcare Platform</h1>
+          <p style="margin: 8px 0 0; color: rgba(255,255,255,0.8); font-size: 13px;">Post-Visit Clinical Summary</p>
+        </div>
+
+        <div style="padding: 36px 40px;">
+          <h2 style="color: #38bdf8; margin-top: 0;">Your Visit Summary 📋</h2>
+          <p>Dear <strong>${patientName}</strong>,</p>
+          <p>Your consultation with <strong>Dr. ${doctorName}</strong> is now complete. Here is a summary of your visit in simple language:</p>
+
+          <!-- Diagnosis -->
+          <div style="background: #1e293b; border-radius: 10px; padding: 18px 22px; margin: 20px 0; border-left: 4px solid #0284c7;">
+            <p style="margin: 0 0 6px; font-size: 12px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Diagnosis</p>
+            <p style="margin: 0; font-size: 16px; font-weight: 700; color: #f0f9ff;">${diagnosis || 'Clinical evaluation completed'}</p>
+          </div>
+
+          <!-- AI Health Summary -->
+          <div style="background: #1e293b; border-radius: 10px; padding: 18px 22px; margin: 20px 0; border-left: 4px solid #14b8a6;">
+            <p style="margin: 0 0 8px; font-size: 12px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">🤖 AI Health Summary (Plain Language)</p>
+            <p style="margin: 0; line-height: 1.7; color: #e2e8f0;">${aiSummary || 'Your doctor has completed the consultation and issued a prescription. Please follow the medication schedule carefully.'}</p>
+          </div>
+
+          <!-- Medication Timetable -->
+          ${medications && medications.length > 0 ? `
+          <div style="margin: 24px 0;">
+            <p style="font-weight: 700; margin-bottom: 12px; color: #f0f9ff;">💊 Your Medication Schedule</p>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: #1e293b;">
+                  <th style="padding: 10px 14px; text-align: left; font-size: 12px; color: #94a3b8; border-bottom: 1px solid #334155;">Medicine</th>
+                  <th style="padding: 10px 14px; text-align: left; font-size: 12px; color: #94a3b8; border-bottom: 1px solid #334155;">Dose</th>
+                  <th style="padding: 10px 14px; text-align: left; font-size: 12px; color: #94a3b8; border-bottom: 1px solid #334155;">Frequency</th>
+                  <th style="padding: 10px 14px; text-align: left; font-size: 12px; color: #94a3b8; border-bottom: 1px solid #334155;">When</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${medications.map((m, i) => `
+                <tr style="background: ${i % 2 === 0 ? '#0f172a' : '#1e293b'};">
+                  <td style="padding: 10px 14px; font-weight: 700; color: #e2e8f0; border-bottom: 1px solid #1e293b;">${m.name}</td>
+                  <td style="padding: 10px 14px; color: #94a3b8; border-bottom: 1px solid #1e293b;">${m.dosage || '—'}</td>
+                  <td style="padding: 10px 14px; color: #94a3b8; border-bottom: 1px solid #1e293b;">${m.frequency || '—'}</td>
+                  <td style="padding: 10px 14px; color: #10b981; font-weight: 600; border-bottom: 1px solid #1e293b;">${m.timing === 'after_food' ? 'After Meals' : m.timing === 'before_food' ? 'Before Meals' : m.timing === 'with_food' ? 'With Meals' : 'As Directed'}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+            <p style="font-size: 11px; color: #64748b; margin-top: 8px;">⏰ You will receive medication reminder emails at the scheduled times above.</p>
+          </div>
+          ` : ''}
+
+          <!-- Warning Flags -->
+          ${warningFlags && warningFlags.length > 0 ? `
+          <div style="background: #422006; border: 1px solid #d97706; border-radius: 10px; padding: 16px 20px; margin: 20px 0;">
+            <p style="margin: 0 0 8px; font-weight: 700; color: #fbbf24; font-size: 13px;">⚠️ Important Instructions</p>
+            ${warningFlags.map(f => `<p style="margin: 4px 0; color: #fde68a; font-size: 13px;">• ${f}</p>`).join('')}
+          </div>
+          ` : ''}
+
+          <!-- Next Checkup -->
+          ${nextCheckup ? `
+          <div style="background: #1e293b; border-radius: 8px; padding: 14px 18px; margin: 16px 0; display: inline-flex; align-items: center; gap: 10px;">
+            <span style="font-size: 20px;">📅</span>
+            <div>
+              <p style="margin: 0; font-size: 12px; color: #94a3b8;">Follow-up / Next Checkup</p>
+              <p style="margin: 2px 0 0; font-weight: 700; color: #38bdf8;">${nextCheckup}</p>
+            </div>
+          </div>
+          ` : ''}
+
+          <p style="color: #94a3b8; font-size: 13px; margin-top: 24px;">Reference ID: <code style="color: #64748b;">${appointmentId}</code></p>
+          <p style="color: #94a3b8; font-size: 13px;">If your symptoms worsen or you have questions, contact the hospital helpline immediately.</p>
+        </div>
+
+        <div style="padding: 20px 40px; background: #0f172a; border-top: 1px solid #1e293b; text-align: center; color: #64748b; font-size: 12px;">
+          <p>PulseCare Healthcare Platform · Secure Clinical Management</p>
+          <p style="margin: 4px 0 0;">This is an automated clinical summary. Please do not reply to this email.</p>
+        </div>
+      </div>
+    `,
+  }),
 };
 
 module.exports = { sendEmail, queueNotification, templates, JOB_TYPE };

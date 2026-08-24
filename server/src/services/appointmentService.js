@@ -327,6 +327,34 @@ const submitPostVisitNotes = async (appointmentId, doctorId, { clinicalNotes, vi
         'postVisitAI.generatedAt': aiSummary.generatedAt,
       });
 
+      // Queue post-visit summary email to patient
+      try {
+        const freshAppt = await Appointment.findById(appointmentId).populate('patientId', 'firstName lastName email').populate('doctorId', 'firstName lastName');
+        if (freshAppt && freshAppt.patientId) {
+          const { subject, html } = templates.postVisitSummary({
+            patientName: `${freshAppt.patientId.firstName} ${freshAppt.patientId.lastName}`,
+            doctorName: freshAppt.doctorId ? `${freshAppt.doctorId.firstName} ${freshAppt.doctorId.lastName}` : 'Your Doctor',
+            diagnosis: freshAppt.diagnosis,
+            aiSummary: aiSummary.patientFriendlySummary,
+            medications: freshAppt.prescription?.medications || [],
+            warningFlags: aiSummary.warningFlags || [],
+            nextCheckup: aiSummary.nextCheckupDeadline,
+            appointmentId: freshAppt._id,
+          });
+          await queueNotification({
+            type: JOB_TYPE.POST_VISIT_SUMMARY,
+            recipientId: freshAppt.patientId._id,
+            recipientEmail: freshAppt.patientId.email,
+            subject,
+            htmlBody: html,
+            appointmentId: freshAppt._id,
+          });
+          logger.info(`[AppointmentService] Post-visit summary email queued for ${freshAppt.patientId.email}`);
+        }
+      } catch (emailErr) {
+        logger.error(`[AppointmentService] Post-visit email queuing failed: ${emailErr.message}`);
+      }
+
       // Queue medication reminders
       if (prescription?.medications?.length) {
         const patient = await User.findById(appointment.patientId);
