@@ -5,153 +5,142 @@ import {
   Activity, Shield, Brain, Calendar, Clock, ChevronRight, Star,
   Zap, Lock, Bell, MapPin, Search, Sparkles, CheckCircle2, Phone,
   Award, Heart, Stethoscope, Building2, UserCheck, ArrowRight, FileText,
-  FlaskConical, Check, Pill, Flame, AlertCircle, HeartPulse, RefreshCw
+  FlaskConical, Check, Pill, AlertTriangle, PhoneCall, Bed, Ambulance,
+  HeartPulse, ShieldCheck, HelpCircle, Thermometer, User
 } from 'lucide-react';
 import { POPULAR_CITIES, setStoredCity, getStoredCity } from '../../components/common/LocationSelector';
 import { useToast } from '../../components/ui/NotificationToast';
 
-const SEARCH_SUGGESTIONS = [
-  { text: 'Cardiologist in Indore', specialty: 'Cardiology', city: 'Indore' },
-  { text: 'Skin rash & itching in Bhopal', specialty: 'Dermatology', city: 'Bhopal' },
-  { text: 'Dentist for root canal', specialty: 'Dentistry', city: 'Bhopal' },
-  { text: 'Veterinary doctor in Bengaluru', specialty: 'Veterinary & Animal Care', city: 'Bengaluru' },
-  { text: 'Orthopaedic joint specialist', specialty: 'Orthopaedics', city: 'Bhopal' },
-];
-
-const MEDICINES_DATABASE = [
+const CENTRES_OF_EXCELLENCE = [
   {
-    name: 'Dolo 650 (Paracetamol)',
-    salt: 'Paracetamol 650mg',
-    brandedPrice: 34,
-    janAushadhiPrice: 12,
-    quantity: '15 Tablets',
-    savingsPercent: 65,
-    indication: 'Fever, mild-to-moderate body aches, post-vaccine pain',
-  },
-  {
-    name: 'Augmentin 625 Duo',
-    salt: 'Amoxicillin 500mg + Clavulanic Acid 125mg',
-    brandedPrice: 210,
-    janAushadhiPrice: 65,
-    quantity: '10 Tablets',
-    savingsPercent: 69,
-    indication: 'Bacterial infections, respiratory tract, ENT, dental abscess',
-  },
-  {
-    name: 'Pan 40 (Pantoprazole)',
-    salt: 'Pantoprazole Gastro-resistant 40mg',
-    brandedPrice: 125,
-    janAushadhiPrice: 26,
-    quantity: '15 Tablets',
-    savingsPercent: 79,
-    indication: 'Acid reflux (GERD), gastric ulcer, acidity prevention',
-  },
-  {
-    name: 'Telma 40 (Telmisartan)',
-    salt: 'Telmisartan 40mg',
-    brandedPrice: 135,
-    janAushadhiPrice: 22,
-    quantity: '15 Tablets',
-    savingsPercent: 84,
-    indication: 'Hypertension (High Blood Pressure), cardiovascular risk reduction',
-  },
-  {
-    name: 'Glycomet 500 (Metformin)',
-    salt: 'Metformin Hydrochloride 500mg IP',
-    brandedPrice: 48,
-    janAushadhiPrice: 11,
-    quantity: '10 Tablets',
-    savingsPercent: 77,
-    indication: 'Type 2 Diabetes Mellitus glycemic control',
-  },
-  {
-    name: 'Montair-LC',
-    salt: 'Levocetirizine 5mg + Montelukast 10mg',
-    brandedPrice: 195,
-    janAushadhiPrice: 45,
-    quantity: '10 Tablets',
-    savingsPercent: 77,
-    indication: 'Allergic rhinitis, asthma flare-up, seasonal sneezing & congestion',
-  },
-];
-
-const SYMPTOM_TRIAGE_SCENARIOS = [
-  {
-    id: 'chest',
+    id: 'Cardiology',
+    title: 'Heart & Vascular Institute',
+    spec: 'Cardiology',
     icon: '❤️',
-    label: 'Chest Tightness & Palpitations',
-    urgency: 'Critical',
-    urgencyColor: '#F43F5E',
-    urgencyBg: '#FFF1F2',
-    specialty: 'Cardiology',
-    advice: 'Immediate ECG & Troponin evaluation. Do not delay.',
-    suggestedQuestions: ['Are symptoms radiating to the left arm?', 'Do you have a history of hypertension?'],
+    stat: '14 Board Specialists',
+    desc: 'Comprehensive coronary angioplasty, 24/7 primary PCI, electrophysiology & cardiac bypass surgeries.',
+    procedures: ['Coronary Angiography', 'ECG & ECHO', 'TMT & Holter', 'Pacemaker Implantation'],
   },
   {
-    id: 'skin',
+    id: 'Neurology',
+    title: 'Institute of Neurosciences & Spine',
+    spec: 'Neurology',
+    icon: '🧠',
+    stat: '9 Board Specialists',
+    desc: 'Comprehensive stroke management unit, epilepsy monitoring, neuro-rehabilitation & minimally invasive spine care.',
+    procedures: ['Brain MRI & CT', 'EEG / EMG Studies', 'Stroke Rapid Response', 'Spine Reconstruction'],
+  },
+  {
+    id: 'Orthopaedics',
+    title: 'Orthopaedics & Joint Replacement',
+    spec: 'Orthopaedics',
+    icon: '🦴',
+    stat: '15 Board Specialists',
+    desc: 'Robotic total knee & hip replacement, arthroscopic ligament reconstruction & complex trauma surgery.',
+    procedures: ['Robotic Joint Replacement', 'Arthroscopy', 'Sports Injury Clinic', 'Fracture Care'],
+  },
+  {
+    id: 'Dermatology',
+    title: 'Dermatology & Cosmetology Center',
+    spec: 'Dermatology',
     icon: '🧴',
-    label: 'Erythematous Skin Rash & Itching',
-    urgency: 'Medium',
-    urgencyColor: '#F59E0B',
-    urgencyBg: '#FEF3C7',
-    specialty: 'Dermatology',
-    advice: 'Antihistamine symptomatic relief; consult a dermatologist.',
-    suggestedQuestions: ['Did this appear after contact with allergens?', 'Any facial swelling or difficulty breathing?'],
+    stat: '18 Board Specialists',
+    desc: 'Clinical management of psoriasis, eczema, acne scar laser revision, and dermatological surgery.',
+    procedures: ['Allergy Testing', 'Laser Therapy', 'Skin Biopsy', 'Hair Restoration'],
   },
   {
-    id: 'dental',
+    id: 'Dentistry',
+    title: 'Dental & Maxillofacial Surgery',
+    spec: 'Dentistry',
     icon: '🦷',
-    label: 'Severe Throbbing Toothache',
-    urgency: 'Medium',
-    urgencyColor: '#F59E0B',
-    urgencyBg: '#FEF3C7',
-    specialty: 'Dentistry',
-    advice: 'Possible dental pulp infection requiring root canal evaluation.',
-    suggestedQuestions: ['Is the pain aggravated by hot/cold liquids?', 'Is there visible gum swelling?'],
+    stat: '12 Board Specialists',
+    desc: 'Microscopic single-sitting root canal treatment, dental implants, orthodontic aligners & oral surgery.',
+    procedures: ['Single-Sitting RCT', 'Dental Implants', 'Clear Aligners', 'Teeth Scaling'],
   },
   {
-    id: 'fever',
-    icon: '🌡️',
-    label: 'High Fever (102°F) with Chills',
-    urgency: 'High',
-    urgencyColor: '#EA580C',
-    urgencyBg: '#FFEDD5',
-    specialty: 'General Medicine',
-    advice: 'CBC & viral screening recommended; maintain adequate oral hydration.',
-    suggestedQuestions: ['How many days has fever persisted?', 'Any persistent vomiting or body aches?'],
-  },
-  {
-    id: 'pet',
-    icon: '🐾',
-    label: 'Pet Lethargy & Appetite Loss',
-    urgency: 'Medium',
-    urgencyColor: '#F59E0B',
-    urgencyBg: '#FEF3C7',
-    specialty: 'Veterinary & Animal Care',
-    advice: 'Schedule a clinical checkup with an animal care specialist.',
-    suggestedQuestions: ['Is the pet vomiting or refusing all fluids?', 'Is vaccination status up to date?'],
+    id: 'General Medicine',
+    title: 'Internal Medicine & Critical Care',
+    spec: 'General Medicine',
+    icon: '👨‍⚕️',
+    stat: '24 Board Specialists',
+    desc: 'Multidisciplinary outpatient diagnostic clinic, diabetes management, infectious fever panels & 24/7 ICU.',
+    procedures: ['Fever & Infection Panel', 'Diabetes Management', 'Hypertension OPD', 'Executive Health Check'],
   },
 ];
 
-const SPECIALTY_DEPARTMENTS = [
-  { id: 'Cardiology', label: 'Cardiology', icon: '❤️', doctors: '14 Specialists', desc: 'ECG, Angiography, BP Management, Lipid profiles' },
-  { id: 'Dermatology', label: 'Dermatology', icon: '🧴', doctors: '18 Specialists', desc: 'Skin allergies, Acne protocols, Laser, Eczema' },
-  { id: 'Dentistry', label: 'Dentistry', icon: '🦷', doctors: '12 Specialists', desc: 'Root canal, Dental implants, Teeth scaling, Aligners' },
-  { id: 'Neurology', label: 'Neurology', icon: '🧠', doctors: '9 Specialists', desc: 'Stroke rehabilitation, Migraines, Nerve conduction' },
-  { id: 'Orthopaedics', label: 'Orthopaedics', icon: '🦴', doctors: '15 Specialists', desc: 'Joint replacement, Fracture fixation, Spine care' },
-  { id: 'General Medicine', label: 'General Medicine', icon: '👨‍⚕️', doctors: '24 Specialists', desc: 'Fever panels, Diabetes, Preventive wellness OPD' },
+const PREVENTIVE_HEALTH_PACKAGES = [
+  {
+    title: 'Executive Cardiac Wellness Screen',
+    idealFor: 'Age 35+ / History of BP or Cholesterol',
+    price: '₹2,499',
+    originalPrice: '₹6,800',
+    testsCount: '18 Lab & Diagnostic Tests',
+    includes: ['12-Lead Resting ECG', '2D Echocardiography', 'Lipid Profile Comprehensive', 'Serum Creatinine', 'Consultation with Senior Cardiologist'],
+    tag: 'Recommended',
+    spec: 'Cardiology',
+  },
+  {
+    title: 'Comprehensive Master Health Checkup',
+    idealFor: 'Full Body Annual Clinical Assessment',
+    price: '₹1,799',
+    originalPrice: '₹4,500',
+    testsCount: '62 Blood & Urine Parameters',
+    includes: ['Complete Blood Count (CBC)', 'Liver & Renal Function Tests', 'HbA1c & Fasting Glucose', 'Thyroid Profile (T3, T4, TSH)', 'Internal Medicine Physician Review'],
+    tag: 'Popular',
+    spec: 'General Medicine',
+  },
+  {
+    title: 'Senior Citizen Comprehensive Panel',
+    idealFor: 'Men & Women Age 55+',
+    price: '₹2,999',
+    originalPrice: '₹8,200',
+    testsCount: '70+ Specialized Parameters',
+    includes: ['Bone Density (DEXA) Screen', 'Chest X-Ray Digital', 'Cardiac Screen + ECG', 'Vitamin D3 & B12 Levels', 'Geriatric Specialist Consultation'],
+    tag: 'Comprehensive',
+    spec: 'General Medicine',
+  },
+];
+
+const JAN_AUSHADHI_PRICING_TABLE = [
+  {
+    brand: 'Dolo 650',
+    salt: 'Paracetamol 650mg IP',
+    brandedRate: '₹34 (15 tabs)',
+    genericRate: '₹12 (15 tabs)',
+    savings: '65% Savings',
+    indication: 'Fever, post-operative analgesic, headache & body aches',
+  },
+  {
+    brand: 'Augmentin 625 Duo',
+    salt: 'Amoxicillin 500mg + Clavulanic Acid 125mg',
+    brandedRate: '₹210 (10 tabs)',
+    genericRate: '₹65 (10 tabs)',
+    savings: '69% Savings',
+    indication: 'Respiratory, ENT, dental & soft tissue bacterial infections',
+  },
+  {
+    brand: 'Pan 40',
+    salt: 'Pantoprazole Gastro-resistant 40mg',
+    brandedRate: '₹125 (15 tabs)',
+    genericRate: '₹26 (15 tabs)',
+    savings: '79% Savings',
+    indication: 'Gastroesophageal reflux disease (GERD) & peptic ulcer prevention',
+  },
+  {
+    brand: 'Telma 40',
+    salt: 'Telmisartan 40mg IP',
+    brandedRate: '₹135 (15 tabs)',
+    genericRate: '₹22 (15 tabs)',
+    savings: '84% Savings',
+    indication: 'Essential hypertension & cardiovascular risk management',
+  },
 ];
 
 export default function Landing() {
-  const { user, login } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
-  const { addToast } = useToast();
-
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState(getStoredCity() || 'Bhopal');
-  const [activeTriage, setActiveTriage] = useState(SYMPTOM_TRIAGE_SCENARIOS[0]);
-  const [selectedMedIndex, setSelectedMedIndex] = useState(0);
-  const [medQuantity, setMedQuantity] = useState(2);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -163,459 +152,183 @@ export default function Landing() {
     navigate(`/patient/doctors?q=${encodeURIComponent(q)}&ai=true`);
   };
 
-  const handleQuickSuggestion = (item) => {
-    setSearchQuery(item.text);
-    if (item.city) {
-      setSelectedCity(item.city);
-      setStoredCity(item.city);
-    }
-    navigate(`/patient/doctors?q=${encodeURIComponent(item.text)}&ai=true`);
-  };
-
-  const selectedMed = MEDICINES_DATABASE[selectedMedIndex];
-  const totalBranded = selectedMed.brandedPrice * medQuantity;
-  const totalJanAushadhi = selectedMed.janAushadhiPrice * medQuantity;
-  const totalSavings = totalBranded - totalJanAushadhi;
-
   return (
-    <div className="page" style={{ paddingTop: '1.5rem' }}>
-      <div className="container">
-        
-        {/* ========================================================= */}
-        {/* 1. ASYMMETRIC BENTO GRID HERO */}
-        {/* ========================================================= */}
-        <div className="bento-grid" style={{ marginBottom: '3.5rem' }}>
-          
-          {/* Main Hero Card (8 Cols) */}
-          <div className="bento-col-8 glass-card" style={{
-            padding: '2.5rem',
-            background: 'linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)',
-            border: '1px solid rgba(79, 70, 229, 0.15)',
-            position: 'relative',
-            overflow: 'hidden',
-          }}>
-            {/* Top decorative gradient orb */}
-            <div style={{
-              position: 'absolute',
-              top: '-60px',
-              right: '-60px',
-              width: '200px',
-              height: '200px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(79, 70, 229, 0.12) 0%, transparent 70%)',
-              pointerEvents: 'none',
-            }} />
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
-              <span className="badge badge-indigo">
-                <Sparkles size={13} />
-                Next-Gen Clinical Ecosystem
-              </span>
-              <span className="badge badge-emerald">
-                <CheckCircle2 size={13} />
-                2-Phase Atomic Slot Hold
-              </span>
-            </div>
-
-            <h1 style={{ fontSize: '2.75rem', lineHeight: 1.15, marginBottom: '1.25rem', fontWeight: 800 }}>
-              Intelligent Healthcare, <br />
-              <span className="gradient-text-primary">Instant Triage & 30-Min Holds.</span>
-            </h1>
-
-            <p style={{ fontSize: '1.05rem', color: 'var(--color-text-secondary)', marginBottom: '2rem', maxWidth: '600px', lineHeight: 1.6 }}>
-              Experience clinical appointment booking powered by Gemini AI triage, zero double-booking 5-minute atomic locks, and transparent Jan Aushadhi generic pharmacy savings.
-            </p>
-
-            {/* Live AI Command Search Bar */}
-            <form onSubmit={handleSearchSubmit} style={{ marginBottom: '1.5rem' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                background: '#FFFFFF',
-                borderRadius: '16px',
-                padding: '6px 8px 6px 16px',
-                border: '2px solid #E2E8F0',
-                boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
-                transition: 'all 0.2s',
-              }}>
-                <Search size={20} color="#4F46E5" style={{ marginRight: '10px', flexShrink: 0 }} />
-                <input
-                  type="text"
-                  placeholder="Ask anything: 'Cardiologist in Indore', 'Rash in Bhopal', 'Dentist'..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    border: 'none',
-                    outline: 'none',
-                    width: '100%',
-                    fontSize: '0.95rem',
-                    color: '#0F172A',
-                    fontWeight: 500,
-                  }}
-                />
-                <button
-                  type="submit"
-                  className="btn btn-primary btn-pill"
-                  style={{ padding: '10px 22px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <Sparkles size={15} />
-                  <span>AI Triage</span>
-                </button>
-              </div>
-            </form>
-
-            {/* Quick Query Pills */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#94A3B8' }}>Try asking:</span>
-              {SEARCH_SUGGESTIONS.map((item, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleQuickSuggestion(item)}
-                  style={{
-                    border: '1px solid #E2E8F0',
-                    background: '#FFFFFF',
-                    borderRadius: '9999px',
-                    padding: '4px 12px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    color: '#475569',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#4F46E5';
-                    e.currentTarget.style.color = '#4F46E5';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#E2E8F0';
-                    e.currentTarget.style.color = '#475569';
-                  }}
-                >
-                  {item.text}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Right Bento Column: Live System Pulse & 1-Click Evaluation (4 Cols) */}
-          <div className="bento-col-4" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <div className="page" style={{ paddingTop: 0 }}>
+      
+      {/* ========================================================= */}
+      {/* 1. CLINICAL EMERGENCY & OPD HERO BANNER */}
+      {/* ========================================================= */}
+      <section style={{
+        background: 'linear-gradient(180deg, #0F2942 0%, #1E3A5F 100%)',
+        color: '#FFFFFF',
+        padding: '3.5rem 0 4rem 0',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+      }}>
+        <div className="container">
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '3rem', alignItems: 'center' }}>
             
-            {/* Live Metrics Card */}
-            <div className="glass-card" style={{ padding: '1.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Live System Health
+            {/* Left Column: Hospital Introduction & Search */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
+                <span className="badge badge-emerald">
+                  <ShieldCheck size={13} />
+                  NABH Accredited Tertiary Care
                 </span>
-                <span className="pulse-dot" />
+                <span style={{ fontSize: '12px', color: '#93C5FD', fontWeight: 600 }}>
+                  Live OPD Appointments Open in {selectedCity}
+                </span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '1rem' }}>
-                <div style={{ padding: '12px', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#4F46E5' }}>5 Min</div>
-                  <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>Atomic Slot Hold</div>
-                </div>
-                <div style={{ padding: '12px', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#10B981' }}>80% ↓</div>
-                  <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>Generic Drug Savings</div>
-                </div>
-              </div>
+              <h1 style={{ fontSize: '2.75rem', fontWeight: 800, color: '#FFFFFF', lineHeight: 1.2, marginBottom: '1rem', letterSpacing: '-0.02em' }}>
+                World-Class Clinical Care & <br />
+                <span style={{ color: '#38BDF8' }}>Intelligent Doctor Consultations</span>
+              </h1>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', color: '#475569' }}>
-                <Shield size={16} color="#10B981" />
-                <span>Zero Double-Booking Guarantee via MongoDB locks</span>
-              </div>
-            </div>
+              <p style={{ fontSize: '1rem', color: '#CBD5E1', lineHeight: 1.6, marginBottom: '2rem', maxWidth: '580px' }}>
+                Book guaranteed 30-minute consultation slots with verified super-specialists. Powered by 5-minute atomic slot reservation holds, clinical symptom triage, and transparent Jan Aushadhi generic pharmacy rates.
+              </p>
 
-            {/* Quick 1-Click Role Login Bento Box */}
-            <div className="glass-card-dark" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                  <Zap size={16} color="#F59E0B" />
-                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#FCD34D', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Instant Demo Portal Access
-                  </span>
-                </div>
-                <h3 style={{ color: '#FFFFFF', fontSize: '1.15rem', marginBottom: '1rem' }}>
-                  Evaluate Portals in 1-Click
-                </h3>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await login({ email: 'rohan@patient.demo', password: 'Patient@123456' });
-                    navigate('/patient');
-                  }}
-                  className="btn btn-sm"
-                  style={{ background: 'rgba(255, 255, 255, 0.1)', color: '#FFFFFF', border: '1px solid rgba(255, 255, 255, 0.2)', justifyContent: 'space-between' }}
-                >
-                  <span>👤 Patient Hub (Rohan)</span>
-                  <ChevronRight size={14} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await login({ email: 'dr.priya@healthsync.demo', password: 'Doctor@123456' });
-                    navigate('/doctor');
-                  }}
-                  className="btn btn-sm"
-                  style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#6EE7B7', border: '1px solid rgba(16, 185, 129, 0.4)', justifyContent: 'space-between' }}
-                >
-                  <span>🩺 Doctor Schedule (Dr. Priya)</span>
-                  <ChevronRight size={14} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await login({ email: 'admin@healthsync.demo', password: 'Admin@123456' });
-                    navigate('/admin');
-                  }}
-                  className="btn btn-sm"
-                  style={{ background: 'rgba(99, 102, 241, 0.2)', color: '#C7D2FE', border: '1px solid rgba(99, 102, 241, 0.4)', justifyContent: 'space-between' }}
-                >
-                  <span>🛡️ Admin Command Center</span>
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* ========================================================= */}
-        {/* 2. INTERACTIVE LIVE AI CLINICAL TRIAGE SIMULATOR */}
-        {/* ========================================================= */}
-        <div style={{ marginBottom: '4rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <span className="badge badge-indigo" style={{ marginBottom: '8px' }}>
-              <Brain size={13} />
-              Interactive Clinical Simulation
-            </span>
-            <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>
-              Live AI Symptom Triage Simulator
-            </h2>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
-              Tap any clinical scenario below to see real-time AI urgency classification & recommended specialist.
-            </p>
-          </div>
-
-          <div className="glass-card" style={{ padding: '2rem', border: '1.5px solid rgba(79, 70, 229, 0.2)' }}>
-            
-            {/* Scenario Chips */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', marginBottom: '2rem' }}>
-              {SYMPTOM_TRIAGE_SCENARIOS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setActiveTriage(item)}
-                  className={`triage-option-chip ${activeTriage.id === item.id ? 'selected' : ''}`}
-                >
-                  <span style={{ fontSize: '1.25rem' }}>{item.icon}</span>
-                  <span style={{ textAlign: 'left' }}>{item.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Live Triage Output Visualizer */}
-            <div style={{
-              background: '#F8FAFC',
-              borderRadius: '16px',
-              padding: '1.75rem',
-              border: '1px solid #E2E8F0',
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '2rem',
-            }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
-                  <span style={{
-                    padding: '4px 12px',
-                    borderRadius: '9999px',
-                    fontSize: '12px',
-                    fontWeight: 800,
-                    background: activeTriage.urgencyBg,
-                    color: activeTriage.urgencyColor,
-                    border: `1px solid ${activeTriage.urgencyColor}`,
-                  }}>
-                    Urgency Level: {activeTriage.urgency}
-                  </span>
-                  <span className="badge badge-indigo">
-                    Matched: {activeTriage.specialty}
-                  </span>
-                </div>
-
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem', color: '#0F172A' }}>
-                  AI Clinical Assessment
-                </h3>
-                <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.6, marginBottom: '1rem' }}>
-                  {activeTriage.advice}
-                </p>
-
-                <div style={{ display: 'flex', gap: '10px' }}>
+              {/* Clinical Search Bar */}
+              <form onSubmit={handleSearchSubmit} style={{ maxWidth: '600px', marginBottom: '1.25rem' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: '#FFFFFF',
+                  borderRadius: '10px',
+                  padding: '6px 8px 6px 16px',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                }}>
+                  <Search size={18} color="#0284C7" style={{ marginRight: '10px', flexShrink: 0 }} />
+                  <input
+                    type="text"
+                    placeholder="Search doctor name, specialty, condition (e.g. 'Cardiology', 'Dr. Priya', 'Fever')..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      width: '100%',
+                      fontSize: '14px',
+                      color: '#0F172A',
+                      fontWeight: 600,
+                    }}
+                  />
                   <button
-                    type="button"
-                    onClick={() => navigate(`/patient/doctors?q=${encodeURIComponent(activeTriage.specialty)}`)}
-                    className="btn btn-primary btn-sm btn-pill"
+                    type="submit"
+                    className="btn btn-primary btn-sm"
+                    style={{ padding: '10px 20px', fontWeight: 700 }}
                   >
-                    <span>Book {activeTriage.specialty} Specialist</span>
-                    <ArrowRight size={14} />
+                    Find Specialists
                   </button>
                 </div>
-              </div>
+              </form>
 
-              {/* Doctor Questions Synthesized */}
-              <div style={{ borderLeft: '1px solid #E2E8F0', paddingLeft: '1.5rem' }}>
-                <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.04em' }}>
-                  Suggested Pre-Visit Questions for Doctor:
-                </div>
-                <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {activeTriage.suggestedQuestions.map((q, idx) => (
-                    <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: '#334155' }}>
-                      <Check size={14} color="#10B981" style={{ marginTop: '3px', flexShrink: 0 }} />
-                      <span>{q}</span>
-                    </li>
-                  ))}
-                </ul>
+              {/* Quick Specialist Links */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: '12px', color: '#94A3B8' }}>
+                <span style={{ fontWeight: 700 }}>Frequent OPD:</span>
+                {['Cardiology', 'Orthopaedics', 'Dermatology', 'Neurology', 'Dentistry', 'Paediatrics'].map((spec) => (
+                  <button
+                    key={spec}
+                    type="button"
+                    onClick={() => navigate(`/patient/doctors?q=${encodeURIComponent(spec)}`)}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: '#E0F2FE',
+                      padding: '3px 10px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '11.5px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {spec}
+                  </button>
+                ))}
               </div>
             </div>
 
-          </div>
-        </div>
-
-        {/* ========================================================= */}
-        {/* 3. INTERACTIVE JAN AUSHADHI GENERIC MEDICINE CALCULATOR */}
-        {/* ========================================================= */}
-        <div style={{ marginBottom: '4rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <span className="badge badge-emerald" style={{ marginBottom: '8px' }}>
-              <Pill size={13} />
-              Govt PMBJK Jan Aushadhi Intelligence
-            </span>
-            <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>
-              Generic vs. Branded Medicine Price Calculator
-            </h2>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
-              See how much you save on identical salt compositions with PM Jan Aushadhi generic equivalents.
-            </p>
-          </div>
-
-          <div className="glass-card" style={{ padding: '2rem', border: '1.5px solid rgba(16, 185, 129, 0.2)' }}>
-            
-            {/* Medicine Tabs */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '2rem', justifyContent: 'center' }}>
-              {MEDICINES_DATABASE.map((med, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setSelectedMedIndex(idx)}
-                  className={`pill-tab ${selectedMedIndex === idx ? 'active' : ''}`}
-                >
-                  <Pill size={14} />
-                  <span>{med.name}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Price Comparison Display */}
+            {/* Right Column: Hospital Live Status & Key Indicators */}
             <div style={{
-              background: '#F8FAFC',
+              background: 'rgba(255, 255, 255, 0.06)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
               borderRadius: '16px',
               padding: '2rem',
-              border: '1px solid #E2E8F0',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <div>
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#10B981', textTransform: 'uppercase' }}>
-                    Active Salt Composition
-                  </div>
-                  <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A' }}>
-                    {selectedMed.name} ({selectedMed.quantity})
-                  </h3>
-                  <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 600 }}>
-                    Salt: {selectedMed.salt}
-                  </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="pulse-indicator" />
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Hospital Operational Status
+                  </span>
+                </div>
+                <span style={{ fontSize: '12px', color: '#38BDF8', fontWeight: 700 }}>OPD Active</span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ background: 'rgba(15, 41, 66, 0.6)', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>Available Specialists</div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FFFFFF' }}>45+</div>
+                  <div style={{ fontSize: '11px', color: '#86EFAC' }}>● Real-time OPD Slots</div>
                 </div>
 
-                {/* Quantity Selector */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#475569' }}>Number of Packs:</span>
-                  <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #CBD5E1', borderRadius: '8px', background: '#FFFFFF', overflow: 'hidden' }}>
-                    <button
-                      type="button"
-                      onClick={() => setMedQuantity(Math.max(1, medQuantity - 1))}
-                      style={{ padding: '6px 12px', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 700 }}
-                    >
-                      -
-                    </button>
-                    <span style={{ padding: '6px 12px', fontWeight: 800, color: '#0F172A', minWidth: '30px', textAlign: 'center' }}>
-                      {medQuantity}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setMedQuantity(medQuantity + 1)}
-                      style={{ padding: '6px 12px', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 700 }}
-                    >
-                      +
-                    </button>
-                  </div>
+                <div style={{ background: 'rgba(15, 41, 66, 0.6)', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>Slot Hold Window</div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#38BDF8' }}>5 Mins</div>
+                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>Zero Double-Booking</div>
                 </div>
               </div>
 
-              {/* Comparison Bars */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', alignItems: 'center' }}>
-                
-                {/* Branded Box */}
-                <div style={{ padding: '1.25rem', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748B' }}>Standard Branded Price</div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#64748B', textDecoration: 'line-through' }}>
-                    ₹{totalBranded}
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>₹{selectedMed.brandedPrice} / pack</div>
-                </div>
+              {/* Rapid Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => navigate('/patient/doctors')}
+                  className="btn btn-primary"
+                  style={{ width: '100%', justifyContent: 'space-between', padding: '12px 18px', borderRadius: '8px' }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Calendar size={16} />
+                    <span>Book Outpatient (OPD) Appointment</span>
+                  </span>
+                  <ChevronRight size={16} />
+                </button>
 
-                {/* Jan Aushadhi Box */}
-                <div style={{ padding: '1.25rem', background: '#ECFDF5', borderRadius: '12px', border: '1.5px solid #10B981' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#065F46' }}>PM Jan Aushadhi (Generic)</div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#059669' }}>
-                    ₹{totalJanAushadhi}
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#047857', fontWeight: 600 }}>₹{selectedMed.janAushadhiPrice} / pack</div>
-                </div>
-
-                {/* Total Savings Hero Box */}
-                <div style={{ padding: '1.25rem', background: 'linear-gradient(135deg, #10B981, #059669)', borderRadius: '12px', color: '#FFFFFF', textAlign: 'center' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, opacity: 0.9 }}>Your Instant Savings</div>
-                  <div style={{ fontSize: '2rem', fontWeight: 900 }}>
-                    ₹{totalSavings}
-                  </div>
-                  <div style={{ fontSize: '11px', fontWeight: 700, background: 'rgba(255, 255, 255, 0.2)', padding: '2px 8px', borderRadius: '9999px', display: 'inline-block' }}>
-                    {selectedMed.savingsPercent}% Discount
-                  </div>
-                </div>
-
+                <a
+                  href="tel:1066"
+                  className="btn btn-emergency"
+                  style={{ width: '100%', justifyContent: 'space-between', padding: '12px 18px', borderRadius: '8px' }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <PhoneCall size={16} />
+                    <span>Emergency Ambulance (Dial 1066)</span>
+                  </span>
+                  <span>24/7 Live</span>
+                </a>
               </div>
-
             </div>
 
           </div>
         </div>
+      </section>
 
-        {/* ========================================================= */}
-        {/* 4. CLINICAL SPECIALTY DEPARTMENTS */}
-        {/* ========================================================= */}
-        <div style={{ marginBottom: '4rem' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+      {/* ========================================================= */}
+      {/* 2. CENTRES OF EXCELLENCE (SUPER-SPECIALTY INSTITUTES) */}
+      {/* ========================================================= */}
+      <section style={{ padding: '4rem 0' }}>
+        <div className="container">
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <span className="badge badge-indigo" style={{ marginBottom: '8px' }}>
-                <Stethoscope size={13} />
-                Multi-City Clinical Grid
-              </span>
-              <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>
-                Explore Clinical Departments
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                <Building2 size={16} color="#0284C7" />
+                <span style={{ fontSize: '12px', fontWeight: 800, color: '#0284C7', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Super-Specialty Clinical Care
+                </span>
+              </div>
+              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#0F2942', margin: 0 }}>
+                Centres of Clinical Excellence
               </h2>
             </div>
 
@@ -625,43 +338,334 @@ export default function Landing() {
               className="btn btn-secondary btn-sm"
               style={{ fontWeight: 700 }}
             >
-              <span>View All Specialists</span>
+              <span>View All 12 Departments</span>
               <ArrowRight size={14} />
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
-            {SPECIALTY_DEPARTMENTS.map((dept) => (
+          {/* Department Cards Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
+            {CENTRES_OF_EXCELLENCE.map((dept) => (
               <div
                 key={dept.id}
-                onClick={() => navigate(`/patient/doctors?q=${encodeURIComponent(dept.id)}`)}
-                className="glass-card"
-                style={{ padding: '1.5rem', cursor: 'pointer', position: 'relative' }}
+                className="hospital-card"
+                style={{ cursor: 'pointer' }}
+                onClick={() => navigate(`/patient/doctors?q=${encodeURIComponent(dept.spec)}`)}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                  <span style={{ fontSize: '2rem' }}>{dept.icon}</span>
-                  <span className="badge badge-emerald" style={{ fontSize: '11px' }}>
-                    {dept.doctors}
-                  </span>
+                <div className="hospital-card-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '24px' }}>{dept.icon}</span>
+                    <div>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F2942', margin: 0 }}>
+                        {dept.title}
+                      </h3>
+                      <span style={{ fontSize: '11px', color: '#059669', fontWeight: 700 }}>
+                        {dept.stat}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight size={18} color="#94A3B8" />
                 </div>
 
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '0.4rem', color: '#0F172A' }}>
-                  {dept.label}
-                </h3>
-                <p style={{ fontSize: '12px', color: '#64748B', marginBottom: '1rem', lineHeight: 1.5 }}>
-                  {dept.desc}
-                </p>
+                <div className="hospital-card-body">
+                  <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.5, marginBottom: '1.25rem' }}>
+                    {dept.desc}
+                  </p>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, color: '#4F46E5' }}>
-                  <span>Check Available 30-min Slots</span>
-                  <ChevronRight size={14} />
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '6px' }}>
+                      Key Clinical Procedures:
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {dept.procedures.map((p, idx) => (
+                        <span key={idx} style={{ fontSize: '11px', fontWeight: 600, background: '#F1F5F9', color: '#334155', padding: '3px 8px', borderRadius: '4px' }}>
+                          {p}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #F1F5F9', paddingTop: '10px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#0284C7' }}>
+                      Check Outpatient Slots →
+                    </span>
+                    <span className="badge badge-navy" style={{ fontSize: '10px' }}>
+                      Mon - Sat OPD
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-        </div>
 
-      </div>
+        </div>
+      </section>
+
+      {/* ========================================================= */}
+      {/* 3. PREVENTIVE HEALTH CHECKUP PACKAGES */}
+      {/* ========================================================= */}
+      <section style={{ background: '#F1F5F9', padding: '4rem 0', borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
+        <div className="container">
+          
+          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+            <span className="badge badge-navy" style={{ marginBottom: '8px' }}>
+              <FlaskConical size={13} />
+              Preventive Healthcare Diagnostics
+            </span>
+            <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#0F2942', margin: '0 0 8px 0' }}>
+              Executive Health & Wellness Screening Packages
+            </h2>
+            <p style={{ fontSize: '14px', color: '#64748B', maxWidth: '640px', margin: '0 auto' }}>
+              Early detection saves lives. Schedule comprehensive laboratory diagnostics and specialist doctor reviews with transparent hospital pricing.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+            {PREVENTIVE_HEALTH_PACKAGES.map((pkg, idx) => (
+              <div key={idx} className="hospital-card" style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                
+                <div style={{
+                  position: 'absolute', top: '14px', right: '14px',
+                  background: pkg.tag === 'Recommended' ? '#ECFDF5' : '#E0F2FE',
+                  color: pkg.tag === 'Recommended' ? '#065F46' : '#0369A1',
+                  border: pkg.tag === 'Recommended' ? '1px solid #A7F3D0' : '1px solid #BAE6FD',
+                  fontSize: '11px', fontWeight: 800, padding: '2px 8px', borderRadius: '4px'
+                }}>
+                  {pkg.tag}
+                </div>
+
+                <div className="hospital-card-body" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F2942', marginBottom: '4px', paddingRight: '80px' }}>
+                    {pkg.title}
+                  </h3>
+                  <div style={{ fontSize: '12px', color: '#64748B', marginBottom: '1.25rem', fontWeight: 600 }}>
+                    {pkg.idealFor}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '1rem', padding: '12px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                    <span style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0F2942' }}>{pkg.price}</span>
+                    <span style={{ fontSize: '13px', color: '#94A3B8', textDecoration: 'line-through' }}>{pkg.originalPrice}</span>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#059669', marginLeft: 'auto' }}>Includes 18+ Tests</span>
+                  </div>
+
+                  <div style={{ marginBottom: '1.5rem', flex: 1 }}>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '8px' }}>
+                      Package Inclusions:
+                    </div>
+                    <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {pkg.includes.map((item, itemIdx) => (
+                        <li key={itemIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: '#334155' }}>
+                          <Check size={14} color="#059669" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/patient/doctors?q=${encodeURIComponent(pkg.spec)}`)}
+                    className="btn btn-primary"
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px' }}
+                  >
+                    Schedule Package Screening
+                  </button>
+                </div>
+
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* ========================================================= */}
+      {/* 4. JAN AUSHADHI GENERIC MEDICINE TRANSPARENCY */}
+      {/* ========================================================= */}
+      <section style={{ padding: '4rem 0' }}>
+        <div className="container">
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'center' }}>
+            
+            <div>
+              <span className="badge badge-emerald" style={{ marginBottom: '8px' }}>
+                <Pill size={13} />
+                Pradhan Mantri Bhartiya Janaushadhi Pariyojana
+              </span>
+              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#0F2942', marginBottom: '1rem' }}>
+                Clinical Prescription Price Transparency
+              </h2>
+              <p style={{ fontSize: '14px', color: '#475569', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+                PulseCare supports generic medicine substitution under national clinical pharmacopoeia standards. Identical therapeutic bioequivalence at up to 84% lower cost for outpatient prescriptions.
+              </p>
+
+              <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                <div style={{ padding: '12px 16px', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#065F46' }}>80%+</div>
+                  <div style={{ fontSize: '11px', color: '#047857', fontWeight: 700 }}>Average Patient Savings</div>
+                </div>
+                <div style={{ padding: '12px 16px', background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0369A1' }}>100%</div>
+                  <div style={{ fontSize: '11px', color: '#0284C7', fontWeight: 700 }}>NABL Certified Salts</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Price Table Card */}
+            <div className="hospital-card" style={{ overflow: 'hidden' }}>
+              <div className="hospital-card-header" style={{ background: '#0F2942', color: '#FFFFFF' }}>
+                <div>
+                  <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+                    Standard Salt vs. Jan Aushadhi Generic Rate Card
+                  </h3>
+                  <p style={{ fontSize: '11px', color: '#94A3B8', margin: 0 }}>Government PMBJK benchmark price comparison</p>
+                </div>
+              </div>
+
+              <div style={{ padding: '0' }}>
+                {JAN_AUSHADHI_PRICING_TABLE.map((row, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 16px',
+                      borderBottom: idx < JAN_AUSHADHI_PRICING_TABLE.length - 1 ? '1px solid #E2E8F0' : 'none',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A' }}>
+                        {row.brand}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#64748B' }}>
+                        {row.salt}
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 800, color: '#059669' }}>
+                        {row.genericRate}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#94A3B8', textDecoration: 'line-through' }}>
+                        Branded: {row.brandedRate}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* ========================================================= */}
+      {/* 5. CLINICAL ACCREDITATIONS & QUALITY STANDARDS */}
+      {/* ========================================================= */}
+      <section style={{ background: '#0A192F', color: '#FFFFFF', padding: '3.5rem 0' }}>
+        <div className="container">
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem', textAlign: 'center' }}>
+            <div>
+              <div style={{ fontSize: '2.25rem', fontWeight: 900, color: '#38BDF8', marginBottom: '4px' }}>1,200+</div>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#E2E8F0' }}>Hospital Beds Capacity</div>
+              <div style={{ fontSize: '11px', color: '#94A3B8' }}>ICU, CCU, NICU & Trauma Units</div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: '2.25rem', fontWeight: 900, color: '#4ADE80', marginBottom: '4px' }}>99.4%</div>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#E2E8F0' }}>Clinical Outcome Rate</div>
+              <div style={{ fontSize: '11px', color: '#94A3B8' }}>Post-Surgical Success Tracked</div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: '2.25rem', fontWeight: 900, color: '#38BDF8', marginBottom: '4px' }}>45+</div>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#E2E8F0' }}>Super-Specialty Doctors</div>
+              <div style={{ fontSize: '11px', color: '#94A3B8' }}>DM, MCh, FRCS Board Certified</div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: '2.25rem', fontWeight: 900, color: '#FBBF24', marginBottom: '4px' }}>24/7</div>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#E2E8F0' }}>Emergency & Trauma Care</div>
+              <div style={{ fontSize: '11px', color: '#94A3B8' }}>Level-1 Trauma & Stroke Unit</div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ========================================================= */}
+      {/* 6. HOSPITAL FOOTER & CAMPUS DIRECTORY */}
+      {/* ========================================================= */}
+      <footer style={{ background: '#0F2942', color: '#94A3B8', padding: '3.5rem 0 2rem 0', fontSize: '13px' }}>
+        <div className="container">
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', gap: '2.5rem', marginBottom: '2.5rem' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#FFFFFF', marginBottom: '12px' }}>
+                <Building2 size={24} color="#38BDF8" />
+                <span style={{ fontSize: '1.2rem', fontWeight: 800 }}>PulseCare Medical Institute</span>
+              </div>
+              <p style={{ lineHeight: 1.6, color: '#CBD5E1', marginBottom: '1rem' }}>
+                A multi-specialty tertiary care hospital & clinical research ecosystem dedicated to patient-first medical excellence, rapid diagnostics, and transparent healthcare.
+              </p>
+              <div style={{ fontSize: '12px', color: '#94A3B8' }}>
+                NABH Reference Code: HOSP-2026-TERT-042
+              </div>
+            </div>
+
+            <div>
+              <h4 style={{ color: '#FFFFFF', fontSize: '14px', fontWeight: 800, marginBottom: '12px' }}>
+                Centres of Excellence
+              </h4>
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <li><a href="/patient/doctors?q=Cardiology" style={{ color: '#CBD5E1' }}>Heart & Vascular Institute</a></li>
+                <li><a href="/patient/doctors?q=Neurology" style={{ color: '#CBD5E1' }}>Neurosciences & Spine</a></li>
+                <li><a href="/patient/doctors?q=Orthopaedics" style={{ color: '#CBD5E1' }}>Orthopaedics & Joint Care</a></li>
+                <li><a href="/patient/doctors?q=Dermatology" style={{ color: '#CBD5E1' }}>Dermatology & Cosmetology</a></li>
+                <li><a href="/patient/doctors?q=Dentistry" style={{ color: '#CBD5E1' }}>Dental & Maxillofacial</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 style={{ color: '#FFFFFF', fontSize: '14px', fontWeight: 800, marginBottom: '12px' }}>
+                Clinical Portals
+              </h4>
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <li><a href="/login" style={{ color: '#CBD5E1' }}>Patient Health Hub</a></li>
+                <li><a href="/login" style={{ color: '#CBD5E1' }}>Doctor Clinical EMR</a></li>
+                <li><a href="/login" style={{ color: '#CBD5E1' }}>Hospital Administration</a></li>
+                <li><a href="/patient/doctors" style={{ color: '#CBD5E1' }}>OPD Doctor Schedule</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 style={{ color: '#FFFFFF', fontSize: '14px', fontWeight: 800, marginBottom: '12px' }}>
+                Hospital Campus Locations
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: '#CBD5E1' }}>
+                <div><strong>Bhopal Campus:</strong> E-8 Arera Colony</div>
+                <div><strong>Indore Campus:</strong> AB Road, Vijay Nagar</div>
+                <div><strong>Bengaluru Campus:</strong> Whitefield Main Road</div>
+                <div><strong>Emergency Desk:</strong> +91 755 408 6000</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', color: '#64748B', fontSize: '12px' }}>
+            <div>
+              © 2026 PulseCare Medical & Research Institute. All rights reserved. JCI & NABH Accredited.
+            </div>
+            <div>
+              Medical Disclaimer: Online appointment slots are subject to confirmed clinical availability.
+            </div>
+          </div>
+
+        </div>
+      </footer>
+
     </div>
   );
 }
