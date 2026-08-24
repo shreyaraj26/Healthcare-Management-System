@@ -395,8 +395,24 @@ export default function DoctorDashboard() {
                       </div>
                     </div>
 
-                    {/* Action Button */}
-                    <div>
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        style={{ padding: '8px 12px', fontSize: '12px' }}
+                        onClick={() => {
+                          const title = `OPD Consultation: ${patient?.firstName} ${patient?.lastName}`;
+                          const details = `Patient: ${patient?.firstName} ${patient?.lastName}\nPhone: ${patient?.phone || 'N/A'}\nSymptoms: ${appt.preVisitAI?.chiefComplaint || appt.symptoms || 'OPD Review'}\nUrgency: ${urgency}`;
+                          const startIso = appt.scheduledAt ? new Date(appt.scheduledAt).toISOString().replace(/-|:|\.\d\d\d/g, '') : '';
+                          const endIso = appt.scheduledAt ? new Date(new Date(appt.scheduledAt).getTime() + 30 * 60000).toISOString().replace(/-|:|\.\d\d\d/g, '') : '';
+                          window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&details=${encodeURIComponent(details)}&dates=${startIso}/${endIso}`, '_blank');
+                        }}
+                      >
+                        <Calendar size={13} />
+                        <span>Calendar</span>
+                      </button>
+
                       <button
                         type="button"
                         id={`start-consultation-${appt._id}`}

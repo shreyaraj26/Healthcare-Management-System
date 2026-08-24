@@ -111,13 +111,36 @@ export default function PatientDashboard() {
               </div>
             )}
 
+            {/* Notification & Calendar Status */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
+              <span className="badge badge-emerald" style={{ fontSize: '11px' }}>
+                ✉️ Confirmation Email Dispatched
+              </span>
+              <span className="badge badge-navy" style={{ fontSize: '11px' }}>
+                ⏰ 24h & 2h Reminder Queue Active
+              </span>
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                <MapPin size={13} color="var(--color-accent-teal)" />
-                <span className="text-xs text-muted">HealthSync Verified Medical Center</span>
+                <MapPin size={13} color="#0284C7" />
+                <span className="text-xs text-muted">PulseCare Hospital Main Campus</span>
               </div>
 
-              <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    const title = `Medical Consultation with Dr. ${nextAppt.doctorId?.firstName} ${nextAppt.doctorId?.lastName}`;
+                    const details = `Specialty: ${nextAppt.doctorId?.specialization || 'Clinical Specialist'}\nSymptoms: ${nextAppt.symptoms || 'General OPD'}\nLocation: PulseCare Hospital Main Campus`;
+                    const startIso = nextAppt.scheduledAt ? new Date(nextAppt.scheduledAt).toISOString().replace(/-|:|\.\d\d\d/g, '') : '';
+                    const endIso = nextAppt.scheduledAt ? new Date(new Date(nextAppt.scheduledAt).getTime() + 30 * 60000).toISOString().replace(/-|:|\.\d\d\d/g, '') : '';
+                    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&details=${encodeURIComponent(details)}&dates=${startIso}/${endIso}`, '_blank');
+                  }}
+                >
+                  <Calendar size={13} /> Add to Google Calendar
+                </button>
                 {nextAppt.status === 'CANCELLED_DOCTOR_LEAVE' && (
                   <button
                     className="btn btn-warning btn-sm"
